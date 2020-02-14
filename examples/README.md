@@ -35,3 +35,17 @@ python ../src/sged-translate-coords.py \
          --output=HOG000003295_sites_PDB.tsv \
          --name=PDB
 ```
+
+Structural statistics:
+======================
+
+```bash
+python ../src/sged-pdb-infos.py \
+         --sged=HOG000003295_charge_stats_pvalues_PDB.csv \
+         --group=PDB \
+         --pdb=3BXY.pdb \
+         --chain=A \
+         --measures=AlphaDist \
+         --output=HOG000003295_charge_stats_pvalues_PDB_infos.csv
+
+```
