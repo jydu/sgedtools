@@ -39,6 +39,8 @@ python ../src/sged-translate-coords.py \
 Structural statistics:
 ======================
 
+Compute 3D distances:
+
 ```bash
 python ../src/sged-pdb-infos.py \
          --sged=HOG000003295_charge_stats_pvalues_PDB.csv \
@@ -49,3 +51,10 @@ python ../src/sged-pdb-infos.py \
          --output=HOG000003295_charge_stats_pvalues_PDB_infos.csv
 
 ```
+
+Get secondary structure motif and solvent accessibility:
+
+```bash 
+dssp -i 3BXY.pdb -o 3BXY.dssp
+```
+
