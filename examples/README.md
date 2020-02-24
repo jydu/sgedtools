@@ -39,7 +39,7 @@ python ../src/sged-translate-coords.py \
 Structural statistics:
 ======================
 
-Compute 3D distances:
+Compute 3D distances, RSA, and secondary structures:
 
 ```bash
 python ../src/sged-pdb-infos.py \
@@ -47,14 +47,19 @@ python ../src/sged-pdb-infos.py \
          --group=PDB \
          --pdb=3BXY.pdb \
          --chain=A \
-         --measures=AlphaDist \
+         --measures=AlphaDist,DSSPsum \
          --output=HOG000003295_charge_stats_pvalues_PDB_infos.csv
 
 ```
 
-Get secondary structure motif and solvent accessibility:
+RSA and structure per site:
+```bash
+python ../src/sged-pdb-infos.py \
+         --sged=HOG000003295_sites_PDB.tsv \
+         --group=PDB \
+         --pdb=3BXY.pdb \
+         --chain=A \
+         --measures=DSSP \
+         --output=HOG000003295_sites_PDB_infos.csv
 
-```bash 
-dssp -i 3BXY.pdb -o 3BXY.dssp
-```
-
+``

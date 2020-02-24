@@ -9,6 +9,8 @@ import getopt, sys
 import pandas
 import numpy
 from Bio.PDB import *
+from Bio.PDB.DSSP import DSSP
+from Bio.SeqUtils import *
 
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
@@ -70,7 +72,7 @@ with open(sged_file) as csv_file:
     results_max = [numpy.nan for x in groups]
     results_min = [numpy.nan for x in groups]
     results_med = [numpy.nan for x in groups]
-    results_ave = [numpy.nan for x in groups]
+    results_mea = [numpy.nan for x in groups]
 
     if measure == "AlphaDist":
       for i, g in enumerate(groups):
@@ -86,7 +88,7 @@ with open(sged_file) as csv_file:
           if chain[pos].resname == states[j]:
             calphas.append(chain[pos]['CA'])
           else:
-            print "ERROR! There is no residue %s." % res_sel[j]
+            print "ERROR! There is no residue %s in PDB file." % res_sel[j]
             exit(-2)
         # Compute all pairwise distances between residues CA:
         distances = []
@@ -96,11 +98,81 @@ with open(sged_file) as csv_file:
         results_max[i] = numpy.max(distances) if len(distances) > 0 else numpy.nan
         results_min[i] = numpy.min(distances) if len(distances) > 0 else numpy.nan
         results_med[i] = numpy.median(distances) if len(distances) > 0 else numpy.nan
-        results_ave[i] = numpy.mean(distances) if len(distances) > 0 else numpy.nan
+        results_mea[i] = numpy.mean(distances) if len(distances) > 0 else numpy.nan
       df["AlphaDistMax"]    = results_max
       df["AlphaDistMin"]    = results_min
       df["AlphaDistMedian"] = results_med
-      df["AlphaDistMean"]   = results_ave
+      df["AlphaDistMean"]   = results_mea
+
+    elif measure == "DSSPsum":
+      dssp = DSSP(model, pdb_file)
+      results_str = [numpy.nan for x in groups]
+      results_rsa_max = [numpy.nan for x in groups]
+      results_rsa_min = [numpy.nan for x in groups]
+      results_rsa_med = [numpy.nan for x in groups]
+      results_rsa_mea = [numpy.nan for x in groups]
+      
+      for i, g in enumerate(groups):
+        tmp = g[1:(len(g)-1)]
+        tmp = tmp.replace(' ', '')
+        res_sel = tmp.split(";")
+        # Ignore missing data:
+        res_sel_cleaned = [x for x in res_sel if x != "NA"]
+        positions = [int(x[3:]) for x in res_sel_cleaned]
+        states    = [x[0:3] for x in res_sel_cleaned]
+        motifs    = [numpy.nan for x in positions]
+        rsa       = [numpy.nan for x in positions]
+        for j, pos in enumerate(positions):
+          res = dssp[(chain_sel, pos)] 
+          letter = IUPACData.protein_letters_3to1[states[j].title()]
+          if res[1] == letter:
+             motifs[j] = res[2]
+             rsa[j] = res[3]
+          else:
+            print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+            exit(-2)
+        results_str[i] = "".join(motifs)
+        results_rsa_max[i] = numpy.max(rsa) if len(rsa) > 0 else numpy.nan
+        results_rsa_min[i] = numpy.min(rsa) if len(rsa) > 0 else numpy.nan
+        results_rsa_med[i] = numpy.median(rsa) if len(rsa) > 0 else numpy.nan
+        results_rsa_mea[i] = numpy.mean(rsa) if len(rsa) > 0 else numpy.nan
+      df["RsaMax"]    = results_rsa_max
+      df["RsaMin"]    = results_rsa_min
+      df["RsaMedian"] = results_rsa_med
+      df["RsaMean"]   = results_rsa_mea
+      df["SecondaryStructure"] = results_str
+
+    elif measure == "DSSP": #Best for single sites:
+      dssp = DSSP(model, pdb_file)
+      results_str = [numpy.nan for x in groups]
+      results_rsa = [numpy.nan for x in groups]
+      
+      for i, g in enumerate(groups):
+        tmp = g[1:(len(g)-1)]
+        tmp = tmp.replace(' ', '')
+        res_sel = tmp.split(";")
+        # Ignore missing data:
+        res_sel_cleaned = [x for x in res_sel if x != "NA"]
+        positions = [int(x[3:]) for x in res_sel_cleaned]
+        states    = [x[0:3] for x in res_sel_cleaned]
+        motifs    = [numpy.nan for x in positions]
+        rsa       = [numpy.nan for x in positions]
+        for j, pos in enumerate(positions):
+          res = dssp[(chain_sel, pos)] 
+          letter = IUPACData.protein_letters_3to1[states[j].title()]
+          if res[1] == letter:
+             motifs[j] = res[2]
+             rsa[j] = res[3]
+          else:
+            print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+            exit(-2)
+        results_str[i] = "".join(motifs) if len(motifs) > 0 else numpy.nan
+        results_rsa[i] = numpy.max(rsa) if len(rsa) > 0 else numpy.nan
+      df["Rsa"]                = results_rsa
+      df["SecondaryStructure"] = results_str
+
+
+
 
   # Write results:
   df.to_csv(output_file, sep = delim, na_rep = 'NA', index = False)
