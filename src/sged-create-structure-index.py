@@ -5,7 +5,7 @@
     Convert alignment coordinates to species-specific and structure coordinates
 """
 
-import getopt, sys
+import getopt, sys, glob
 
 from Bio.PDB import *
 from Bio.SeqUtils import *
@@ -29,7 +29,7 @@ except getopt.error as err:
 pdb_files = []
 for arg, val in arguments:
   if arg in ("-p", "--pdb"):
-    pdb_files.append(val)
+    pdb_files = pdb_files + glob.glob(val)
     print "PDB file: %s" % val
   elif arg in ("-a", "--alignment"):
     aln_file = val
@@ -37,7 +37,6 @@ for arg, val in arguments:
   elif arg in ("-o", "--output"):
     output_file = val
     print "Output index file: %s" % output_file
-
 #TODO: check that all args are provided, that file exist, and eventually allow for various alignment formats.
 
 print "Parsing structure(s)..."

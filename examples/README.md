@@ -12,11 +12,19 @@ python ../src/sged-ungroup.py \
 Create a PDB index:
 ===================
 
+We compare all chains in the three available structures to find the best match in the alignment:
 ```bash
 python ../src/sged-create-structure-index.py \
          --pdb=3BXY.pdb \
          --pdb=3EG4.pdb \
          --pdb=3GOS.pdb \
+         --alignment=HOG000003295_bppalnscore.mase \
+         --output=HOG000003295_PdbIndex.txt
+```
+which does the same as
+```bash
+python ../src/sged-create-structure-index.py \
+         --pdb=*.pdb \
          --alignment=HOG000003295_bppalnscore.mase \
          --output=HOG000003295_PdbIndex.txt
 ```
