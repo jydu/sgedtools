@@ -26,10 +26,11 @@ except getopt.error as err:
   print (str(err))
   sys.exit(2)
 
+pdb_files = []
 for arg, val in arguments:
   if arg in ("-p", "--pdb"):
-    pdb_file = val
-    print "PDB file: %s" % pdb_file
+    pdb_files.append(val)
+    print "PDB file: %s" % val
   elif arg in ("-a", "--alignment"):
     aln_file = val
     print "Alignment file: %s" % aln_file
@@ -39,32 +40,34 @@ for arg, val in arguments:
 
 #TODO: check that all args are provided, that file exist, and eventually allow for various alignment formats.
 
-print "Parsing structure..."
+print "Parsing structure(s)..."
 
-structure = parser.get_structure('STRUCT', pdb_file)
-
-# First we need to check that there is only one model:
-if (len(structure) != 1):
-  print( "Error, more than one model in PDB file. Exiting.")
-  exit
-
-model = structure[0]
-
-# Check how many chain there are in the model:
-nb_chains = len(model)
-
-# We retrieve the sequences for each chain:
 pdb_seqs = dict()
-for chain in model:
-  chain_id = chain.get_id()
-  chain_seq = ""
-  for residue in chain:
-    if is_aa(residue):
-      letter = IUPACData.protein_letters_3to1[residue.get_resname().title()]
-      chain_seq = chain_seq + letter
-  pdb_seqs[chain_id] = chain_seq
+for pdb_file in pdb_files:
+  print("Parsing PDB file %s..." % pdb_file)
+  structure = parser.get_structure('STRUCT', pdb_file)
 
-print "Compare structure and alignment..."
+  # First we need to check that there is only one model:
+  if (len(structure) != 1):
+    print( "Error, more than one model in PDB file %s. Exiting." % pdb_file)
+    exit
+
+  model = structure[0]
+
+  # Check how many chain there are in the model:
+  nb_chains = len(model)
+
+  # We retrieve the sequences for each chain:
+  for chain in model:
+    chain_id = chain.get_id()
+    chain_seq = ""
+    for residue in chain:
+      if is_aa(residue):
+        letter = IUPACData.protein_letters_3to1[residue.get_resname().title()]
+        chain_seq = chain_seq + letter
+    pdb_seqs[pdb_file + "|" + chain_id] = chain_seq
+
+print "Compare structure(s) and alignment..."
 
 # We retrieve the original sequence from the alignment:
 with open(aln_file, "rU") as handle:
@@ -87,6 +90,10 @@ aln_seq = aln_seqs[best_aln]
 pdb_seq = pdb_seqs[best_pdb]
 
 print "Build the index..."
+(best_pdb_file, best_pdb_chain) = best_pdb.split("|")
+structure = parser.get_structure('STRUCT', best_pdb_file)
+model = structure[0]
+nb_chains = len(model)
 
 # Build the index of the sequence:
 aln_index = dict()
@@ -97,7 +104,7 @@ for i, c in enumerate(aln_seq):
     aln_index[pos] = i
 
 # Build the index for the PDB sequence:
-chain = model[best_pdb]
+chain = model[best_pdb_chain]
 pdb_index = dict()
 pos = 0
 for residue in chain:
@@ -108,6 +115,7 @@ for residue in chain:
 
 # Get the best alignment:
 pairwise_aln = pairwise2.align.globaldx(str(aln_seq.seq).replace('-', ''), pdb_seq, blosum62)
+#DEBUG: print(pairwise2.format_alignment(*pairwise_aln[0]))
 
 # Get the alignment index. If several alignments are provided, only consistent positions are kept:
 def build_aln_index(aln) :
@@ -136,14 +144,17 @@ for aln in pairwise_aln:
 # Now get the consensus:
 seq_index = dict()
 for k, j in indexes[0].items():
+  test = True
   for i in range(1,len(indexes)):
     if k in indexes[i]:
-      if indexes[i][k] == j:
-        seq_index[k] = j
-      else:
+      if indexes[i][k] != j:
+        test = False
         print "Position %s is ambiguous (2)." % k
     else:
+      test = False
       print "Position %s is ambiguous (1)." % k
+  if test:
+    seq_index[k] = j
 
 print "Write the results..."
 
@@ -152,8 +163,8 @@ with open(output_file, "w") as handle:
   handle.write("# SGED index file version 0.99\n")
   handle.write("# SGED input alignment = %s\n" % aln_file)
   handle.write("# SGED input alignment sequence = %s\n" % best_aln)
-  handle.write("# SGED input PDB = %s\n" % pdb_file)
-  handle.write("# SGED input PDB chain = %s\n" % best_pdb)
+  handle.write("# SGED input PDB = %s\n" % best_pdb_file)
+  handle.write("# SGED input PDB chain = %s\n" % best_pdb_chain)
   handle.write("# SGED index start\n")
   handle.write("AlnPos,PdbRes\n")
   for seq_pos, aln_pos in aln_index.items():
