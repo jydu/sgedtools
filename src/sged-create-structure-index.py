@@ -61,10 +61,15 @@ for pdb_file in pdb_files:
     chain_id = chain.get_id()
     chain_seq = ""
     for residue in chain:
-      if is_aa(residue):
-        letter = IUPACData.protein_letters_3to1[residue.get_resname().title()]
-        chain_seq = chain_seq + letter
-    pdb_seqs[pdb_file + "|" + chain_id] = chain_seq
+      res = residue.get_resname().title()
+      letter = ""
+      if is_aa(residue, standard = True):
+        letter = IUPACData.protein_letters_3to1[res]
+      elif res == "Mse":
+        letter = "S"
+      chain_seq = chain_seq + letter
+    if len(chain_seq) > 0:
+      pdb_seqs[pdb_file + "|" + chain_id] = chain_seq
 
 print "Compare structure(s) and alignment..."
 
@@ -107,14 +112,19 @@ chain = model[best_pdb_chain]
 pdb_index = dict()
 pos = 0
 for residue in chain:
-  if is_aa(residue):
+  res = residue.get_resname().title()
+  if is_aa(residue, standard = True):
     pos = pos + 1
-    letter = IUPACData.protein_letters_3to1[residue.get_resname().title()]
+    letter = IUPACData.protein_letters_3to1[res]
+    pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+  elif res == "Mse":
+    pos = pos + 1
+    letter = "S"
     pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
 
 # Get the best alignment:
 pairwise_aln = pairwise2.align.globaldx(str(aln_seq.seq).replace('-', ''), pdb_seq, blosum62)
-#DEBUG: print(pairwise2.format_alignment(*pairwise_aln[0]))
+print(pairwise2.format_alignment(*pairwise_aln[0]))
 
 # Get the alignment index. If several alignments are provided, only consistent positions are kept:
 def build_aln_index(aln) :
