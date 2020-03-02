@@ -5,7 +5,7 @@
     Get structural info from a PDB file for groups specified in a SGED file.
 """
 
-import getopt, sys
+import getopt, sys, os.path
 import pandas
 import numpy
 from Bio.PDB import *
@@ -58,11 +58,18 @@ else:
 parser = PDBParser()
 structure = parser.get_structure('STRUCT', pdb_file)
 
-if (len(structure) != 1):
-  print( "Error, more than one model in PDB file. Exiting.")
-  exit
+if (len(structure) > 1):
+  print("Warning, %s models in PDB file %s. Using the first one." % (len(structure), pdb_file))
+
 model = structure[0]
 chain = model[chain_sel]
+
+class ModelSelect(Select):
+  def accept_model(self, model):
+    if model.get_id() == 0:
+      return 1
+    else:
+      return 0
 
 # Start parsing
 with open(sged_file) as csv_file:
@@ -105,7 +112,20 @@ with open(sged_file) as csv_file:
       df["AlphaDistMean"]   = results_mea
 
     elif measure == "DSSPsum":
-      dssp = DSSP(model, pdb_file)
+      #DSSP cannot handle multiple models, we get the first one only
+      pdb_file2 = pdb_file
+      if len(structure) > 1:
+        io = PDBIO()
+        io.set_structure(structure)
+        ext = pdb_file[-4:]
+        if ext.lower() == ".pdb":
+          pdb_file2 = pdb_file[:-4] + "_model0" + ext
+        else:
+          pdb_file2 = pdb_file + "_model0"
+        if not os.path.isfile(pdb_file2):
+          io.save(pdb_file2, ModelSelect())
+
+      dssp = DSSP(model, pdb_file2)
       results_str = [numpy.nan for x in groups]
       results_rsa_max = [numpy.nan for x in groups]
       results_rsa_min = [numpy.nan for x in groups]
@@ -123,19 +143,27 @@ with open(sged_file) as csv_file:
         motifs    = [numpy.nan for x in positions]
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
-          res = dssp[(chain_sel, pos)] 
-          letter = IUPACData.protein_letters_3to1[states[j].title()]
-          if res[1] == letter:
-             motifs[j] = res[2]
-             rsa[j] = res[3]
+          if (chain_sel, pos) in dssp:
+            res = dssp[(chain_sel, pos)] 
+            states_res = states[j].title()
+            if states_res == "Mse":
+              letter = "S"
+            else:
+              letter = IUPACData.protein_letters_3to1[states_res]
+            if res[1] == letter:
+               motifs[j] = res[2]
+               rsa[j] = res[3]
+            else:
+              print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+              exit(-2)
           else:
-            print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
-            exit(-2)
+            motifs[j] = " "
+            rsa[j] = numpy.nan
         results_str[i] = "".join(motifs)
-        results_rsa_max[i] = numpy.max(rsa) if len(rsa) > 0 else numpy.nan
-        results_rsa_min[i] = numpy.min(rsa) if len(rsa) > 0 else numpy.nan
-        results_rsa_med[i] = numpy.median(rsa) if len(rsa) > 0 else numpy.nan
-        results_rsa_mea[i] = numpy.mean(rsa) if len(rsa) > 0 else numpy.nan
+        results_rsa_max[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+        results_rsa_min[i] = numpy.nanmin(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+        results_rsa_med[i] = numpy.nanmedian(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+        results_rsa_mea[i] = numpy.nanmean(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
       df["RsaMax"]    = results_rsa_max
       df["RsaMin"]    = results_rsa_min
       df["RsaMedian"] = results_rsa_med
@@ -143,7 +171,20 @@ with open(sged_file) as csv_file:
       df["SecondaryStructure"] = results_str
 
     elif measure == "DSSP": #Best for single sites:
-      dssp = DSSP(model, pdb_file)
+      #DSSP cannot handle multiple models, we get the first one only
+      pdb_file2 = pdb_file
+      if len(structure) > 1:
+        io = PDBIO()
+        io.set_structure(structure)
+        ext = pdb_file[-4:]
+        if ext.lower() == ".pdb":
+          pdb_file2 = pdb_file[:-4] + "_model0" + ext
+        else:
+          pdb_file2 = pdb_file + "_model0"
+        if not os.path.isfile(pdb_file2):
+          io.save(pdb_file2, ModelSelect())
+
+      dssp = DSSP(model, pdb_file2)
       results_str = [numpy.nan for x in groups]
       results_rsa = [numpy.nan for x in groups]
       
@@ -158,16 +199,24 @@ with open(sged_file) as csv_file:
         motifs    = [numpy.nan for x in positions]
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
-          res = dssp[(chain_sel, pos)] 
-          letter = IUPACData.protein_letters_3to1[states[j].title()]
-          if res[1] == letter:
-             motifs[j] = res[2]
-             rsa[j] = res[3]
+          if (chain_sel, pos) in dssp:
+            res = dssp[(chain_sel, pos)]
+            states_res = states[j].title()
+            if states_res == "Mse":
+              letter = "S"
+            else:
+              letter = IUPACData.protein_letters_3to1[states_res]
+            if res[1] == letter:
+               motifs[j] = res[2]
+               rsa[j] = res[3]
+            else:
+              print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+              exit(-2)
           else:
-            print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
-            exit(-2)
+             motifs[j] = " "
+             rsa[j] = numpy.nan
         results_str[i] = "".join(motifs) if len(motifs) > 0 else numpy.nan
-        results_rsa[i] = numpy.max(rsa) if len(rsa) > 0 else numpy.nan
+        results_rsa[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
       df["Rsa"]                = results_rsa
       df["SecondaryStructure"] = results_str
 

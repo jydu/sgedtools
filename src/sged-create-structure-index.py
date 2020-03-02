@@ -47,8 +47,8 @@ for pdb_file in pdb_files:
   structure = parser.get_structure('STRUCT', pdb_file)
 
   # First we need to check that there is only one model:
-  if (len(structure) > 0):
-    print("Warning, %s models in PDB file %s. Using the first one." % (len(structure), pdb_file)
+  if (len(structure) > 1):
+    print("Warning, %s models in PDB file %s. Using the first one." % (len(structure), pdb_file))
 
   model = structure[0]
 
