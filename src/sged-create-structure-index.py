@@ -18,8 +18,8 @@ parser = PDBParser()
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:a:o:"
-full_opt = ["pdb=", "alignment=", "output="]
+unix_opt = "p:a:o:x"
+full_opt = ["pdb=", "alignment=", "output=", "exclude-incomplete"]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -27,6 +27,7 @@ except getopt.error as err:
   sys.exit(2)
 
 pdb_files = []
+exclude_incomplete = False
 for arg, val in arguments:
   if arg in ("-p", "--pdb"):
     pdb_files = pdb_files + glob.glob(val)
@@ -37,11 +38,15 @@ for arg, val in arguments:
   elif arg in ("-o", "--output"):
     output_file = val
     print "Output index file: %s" % output_file
+  elif arg in ("-x", "--exclude-incomplete"):
+    exclude_incomplete = True
 #TODO: check that all args are provided, that file exist, and eventually allow for various alignment formats.
 
 print "Parsing structure(s)..."
 
 pdb_seqs = dict()
+
+prop_incomplete = dict()
 for pdb_file in pdb_files:
   print("Parsing PDB file %s..." % pdb_file)
   structure = parser.get_structure('STRUCT', pdb_file)
@@ -59,16 +64,36 @@ for pdb_file in pdb_files:
   for chain in model:
     chain_id = chain.get_id()
     chain_seq = ""
+    nb_incomplete = 0
     for residue in chain:
+      if len(residue) < 4:
+        #Incomplete residue, most likely only Ca
+        nb_incomplete = nb_incomplete + 1
+
       res = residue.get_resname().title()
       letter = ""
       if is_aa(residue, standard = True):
         letter = IUPACData.protein_letters_3to1[res]
       elif res == "Mse":
-        letter = "S"
+        letter = "M"
+      elif res == "Cse":
+        letter = "C"
+      else:
+        letter = "X"
       chain_seq = chain_seq + letter
+
     if len(chain_seq) > 0:
       pdb_seqs[pdb_file + "|" + chain_id] = chain_seq
+      prop_incomplete[pdb_file + "|" + chain_id] = nb_incomplete / len(chain_seq)
+
+if exclude_incomplete:
+  # Look at the proportion of incomplete data. Keep only chains with the lowest proportion.
+  min_prop_incomplete = min(prop_incomplete.values())
+  print("Minimum proportion of incomplete data: %s" % min_prop_incomplete)
+  for seq, prop in prop_incomplete.items():
+    if prop > min_prop_incomplete:
+      print("Sequence %s has a proportion of incomplete residues equal to %s and is discarded." % (seq, prop))
+      del pdb_seqs[seq]
 
 print "Compare structure(s) and alignment..."
 
@@ -118,8 +143,18 @@ for residue in chain:
     pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
   elif res == "Mse":
     pos = pos + 1
-    letter = "S"
+    letter = "M"
     pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+  elif res == "Cse":
+    pos = pos + 1
+    letter = "C"
+    pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+  else:
+    pos = pos + 1
+    letter = "X"
+    pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+
+
 
 # Get the best alignment:
 pairwise_aln = pairwise2.align.globaldx(str(aln_seq.seq).replace('-', ''), pdb_seq, blosum62)
@@ -178,9 +213,9 @@ with open(output_file, "w") as handle:
   for seq_pos, aln_pos in aln_index.items():
     if seq_pos in seq_index :
       pdb_pos = seq_index[seq_pos]
-      handle.write("%s,%s\n" % (aln_pos, pdb_index[pdb_pos]))
+      handle.write("%s,%s\n" % (aln_pos + 1, pdb_index[pdb_pos]))
     else:
-      handle.write("%s,NA\n" % aln_pos)
+      handle.write("%s,NA\n" % (aln_pos + 1))
 
 print "Done."
 

@@ -146,10 +146,10 @@ with open(sged_file) as csv_file:
           if (chain_sel, pos) in dssp:
             res = dssp[(chain_sel, pos)] 
             states_res = states[j].title()
-            if states_res == "Mse":
-              letter = "S"
-            else:
+            if states_res in IUPACData.protein_letters_3to1:
               letter = IUPACData.protein_letters_3to1[states_res]
+            else:
+              letter = "X"
             if res[1] == letter:
                motifs[j] = res[2]
                rsa[j] = res[3]
@@ -196,16 +196,16 @@ with open(sged_file) as csv_file:
         res_sel_cleaned = [x for x in res_sel if x != "NA"]
         positions = [int(x[3:]) for x in res_sel_cleaned]
         states    = [x[0:3] for x in res_sel_cleaned]
-        motifs    = [numpy.nan for x in positions]
+        motifs    = [numpy.nan for x in ponsitions]
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
           if (chain_sel, pos) in dssp:
             res = dssp[(chain_sel, pos)]
             states_res = states[j].title()
-            if states_res == "Mse":
-              letter = "S"
-            else:
+            if states_res in IUPACData.protein_letters_3to1:
               letter = IUPACData.protein_letters_3to1[states_res]
+            else:
+              letter = "X"
             if res[1] == letter:
                motifs[j] = res[2]
                rsa[j] = res[3]
