@@ -138,7 +138,7 @@ with open(sged_file) as csv_file:
         res_sel = tmp.split(";")
         # Ignore missing data:
         res_sel_cleaned = [x for x in res_sel if x != "NA"]
-        positions = [int(x[3:]) for x in res_sel_cleaned]
+        positions = [x[3: ] for x in res_sel_cleaned]
         states    = [x[0:3] for x in res_sel_cleaned]
         motifs    = [numpy.nan for x in positions]
         rsa       = [numpy.nan for x in positions]
@@ -152,7 +152,10 @@ with open(sged_file) as csv_file:
               letter = "X"
             if res[1] == letter:
                motifs[j] = res[2]
-               rsa[j] = res[3]
+               if res[3] == 'NA':
+                 rsa[j] = numpy.nan
+               else:
+                 rsa[j] = res[3]
             else:
               print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
               exit(-2)
@@ -194,9 +197,9 @@ with open(sged_file) as csv_file:
         res_sel = tmp.split(";")
         # Ignore missing data:
         res_sel_cleaned = [x for x in res_sel if x != "NA"]
-        positions = [int(x[3:]) for x in res_sel_cleaned]
+        positions = [x[3: ] for x in res_sel_cleaned]
         states    = [x[0:3] for x in res_sel_cleaned]
-        motifs    = [numpy.nan for x in ponsitions]
+        motifs    = [numpy.nan for x in positions]
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
           if (chain_sel, pos) in dssp:
@@ -208,7 +211,10 @@ with open(sged_file) as csv_file:
               letter = "X"
             if res[1] == letter:
                motifs[j] = res[2]
-               rsa[j] = res[3]
+               if res[3] == 'NA':
+                 rsa[j] = numpy.nan
+               else:
+                 rsa[j] = res[3]
             else:
               print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
               exit(-2)
