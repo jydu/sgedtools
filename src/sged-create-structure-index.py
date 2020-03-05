@@ -135,24 +135,30 @@ for i, c in enumerate(aln_seq):
 chain = model[best_pdb_chain]
 pdb_index = dict()
 pos = 0
+def res_to_str(id) :
+  s = str(id[1])
+  if id[2] != ' ':
+    s = s + id[2]
+  return s
+
 for residue in chain:
   res = residue.get_resname().title()
   if is_aa(residue, standard = True):
     pos = pos + 1
     letter = IUPACData.protein_letters_3to1[res]
-    pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+    pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
   elif res == "Mse":
     pos = pos + 1
     letter = "M"
-    pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+    pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
   elif res == "Cse":
     pos = pos + 1
     letter = "C"
-    pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+    pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
   else:
     pos = pos + 1
     letter = "X"
-    pdb_index[pos] = "%s%s" % (residue.get_resname(), residue.get_id()[1])
+    pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
 
 
 
