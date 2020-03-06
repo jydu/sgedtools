@@ -143,8 +143,12 @@ with open(sged_file) as csv_file:
         motifs    = [numpy.nan for x in positions]
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
-          if (chain_sel, pos) in dssp:
-            res = dssp[(chain_sel, pos)] 
+          insert_code = ' '
+          if len(pos) > 3:
+            insert_code = pos[3:]
+            pos = pos[:3]
+          if (chain_sel, (' ', int(pos), insert_code)) in dssp:
+            res = dssp[(chain_sel, (' ', int(pos), insert_code))] 
             states_res = states[j].title()
             if states_res in IUPACData.protein_letters_3to1:
               letter = IUPACData.protein_letters_3to1[states_res]
@@ -202,8 +206,12 @@ with open(sged_file) as csv_file:
         motifs    = [numpy.nan for x in positions]
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
-          if (chain_sel, pos) in dssp:
-            res = dssp[(chain_sel, pos)]
+          insert_code = ' '
+          if len(pos) > 3:
+            insert_code = pos[3:]
+            pos = pos[:3]
+          if (chain_sel, (' ', int(pos), insert_code)) in dssp:
+            res = dssp[(chain_sel, (' ', int(pos), insert_code))]
             states_res = states[j].title()
             if states_res in IUPACData.protein_letters_3to1:
               letter = IUPACData.protein_letters_3to1[states_res]
@@ -225,6 +233,33 @@ with open(sged_file) as csv_file:
         results_rsa[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
       df["Rsa"]                = results_rsa
       df["SecondaryStructure"] = results_str
+
+    elif measure == "ResidueDepth":
+      rd = ResidueDepth(model)
+
+      results_res_depth = [numpy.nan for x in groups]
+      results_ca_depth  = [numpy.nan for x in groups]
+      
+      for i, g in enumerate(groups):
+        tmp = g[1:(len(g)-1)]
+        tmp = tmp.replace(' ', '')
+        res_sel = tmp.split(";")
+        # Ignore missing data:
+        res_sel_cleaned = [x for x in res_sel if x != "NA"]
+        positions = [x[3:] for x in res_sel_cleaned]
+        res_depth = [numpy.nan for x in res_sel_cleaned]
+        ca_depth  = [numpy.nan for x in res_sel_cleaned]
+        for j, pos in enumerate(positions):
+          insert_code = ' '
+          if len(pos) > 3:
+            insert_code = pos[3:]
+            pos = pos[:3]
+          if (chain_sel, (' ', int(pos), insert_code)) in rd:
+            (res_depth[j], ca_depth[j]) = rd[(chain_sel, (' ', int(pos), insert_code))]
+        results_res_depth[i] = numpy.nanmean(res_depth) if len(res_depth) > 0 and not all(numpy.isnan(res_depth)) else numpy.nan
+        results_ca_depth[i]  = numpy.nanmean( ca_depth) if len( ca_depth) > 0 and not all(numpy.isnan( ca_depth)) else numpy.nan
+      df["ResidueDepth"] = results_res_depth
+      df[ "CalphaDepth"] = results_ca_depth
 
 
 
