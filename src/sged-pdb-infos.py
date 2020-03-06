@@ -76,24 +76,29 @@ with open(sged_file) as csv_file:
   df = pandas.read_csv(csv_file, sep = delim, dtype = str)
   groups = df[group_col]
   for measure in measures:
-    results_max = [numpy.nan for x in groups]
-    results_min = [numpy.nan for x in groups]
-    results_med = [numpy.nan for x in groups]
-    results_mea = [numpy.nan for x in groups]
 
     if measure == "AlphaDist":
+
+      results_max = [numpy.nan for x in groups]
+      results_min = [numpy.nan for x in groups]
+      results_med = [numpy.nan for x in groups]
+      results_mea = [numpy.nan for x in groups]
       for i, g in enumerate(groups):
         tmp = g[1:(len(g)-1)]
         tmp = tmp.replace(' ', '')
         res_sel = tmp.split(";")
         # Ignore missing data:
         res_sel_cleaned = [x for x in res_sel if x != "NA"]
-        positions = [ int(x[3:]) for x in res_sel_cleaned]
-        states    = [ x[0:3] for x in res_sel_cleaned]
+        positions = [ x[3:] for x in res_sel_cleaned]
+        states    = [ x[:3] for x in res_sel_cleaned]
         calphas   = []
         for j, pos in enumerate(positions):
+          insert_code = ' '
+          if len(pos) > 3:
+            insert_code = pos[3:]
+            pos = pos[:3]
           if chain[pos].resname == states[j]:
-            calphas.append(chain[pos]['CA'])
+            calphas.append(chain[(' ', int(pos), insert_code)]['CA'])
           else:
             print "ERROR! There is no residue %s in PDB file." % res_sel[j]
             exit(-2)
@@ -110,6 +115,54 @@ with open(sged_file) as csv_file:
       df["AlphaDistMin"]    = results_min
       df["AlphaDistMedian"] = results_med
       df["AlphaDistMean"]   = results_mea
+
+
+
+    if measure == "ContactMap":
+      # This provides the mean number of contacts per residue at various thresholds
+      results_contact1 = [numpy.nan for x in groups]
+      results_contact2 = [numpy.nan for x in groups]
+      results_contact3 = [numpy.nan for x in groups]
+      for i, g in enumerate(groups):
+        tmp = g[1:(len(g)-1)]
+        tmp = tmp.replace(' ', '')
+        res_sel = tmp.split(";")
+        # Ignore missing data:
+        res_sel_cleaned = [x for x in res_sel if x != "NA"]
+        positions = [ x[3:] for x in res_sel_cleaned]
+        states    = [ x[:3] for x in res_sel_cleaned]
+        num_contact1 = [0 for x in positions]
+        num_contact2 = [0 for x in positions]
+        num_contact3 = [0 for x in positions]
+        for j, pos in enumerate(positions):
+          insert_code = ' '
+          if len(pos) > 3:
+            insert_code = pos[3:]
+            pos = pos[:3]
+          res_id = (' ', int(pos), insert_code)
+          if chain[res_id].resname == states[j]:
+            #Compute distance of this residue with all others in the structure:
+            for search_chain in model:
+              for search_res in search_chain:
+                if is_aa(search_res) and search_res.get_id() != res_id:
+                  distance = search_res['CA'] - chain[res_id]['CA']
+                  if distance <= 5:
+                    num_contact1[j] = num_contact1[j] + 1
+                  if distance <= 8:
+                    num_contact2[j] = num_contact2[j] + 1
+                  if distance <= 10:
+                    num_contact3[j] = num_contact3[j] + 1
+          else:
+            print "ERROR! There is no residue %s in PDB file." % res_sel[j]
+            exit(-2)
+        results_contact1[i] = numpy.mean(num_contact1)
+        results_contact2[i] = numpy.mean(num_contact2)
+        results_contact3[i] = numpy.mean(num_contact3)
+      df["NbContact5" ] = results_contact1
+      df["NbContact8"] = results_contact2
+      df["NbContact10"] = results_contact3
+
+
 
     elif measure == "DSSPsum":
       #DSSP cannot handle multiple models, we get the first one only
@@ -177,6 +230,8 @@ with open(sged_file) as csv_file:
       df["RsaMean"]   = results_rsa_mea
       df["SecondaryStructure"] = results_str
 
+
+
     elif measure == "DSSP": #Best for single sites:
       #DSSP cannot handle multiple models, we get the first one only
       pdb_file2 = pdb_file
@@ -233,6 +288,8 @@ with open(sged_file) as csv_file:
         results_rsa[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
       df["Rsa"]                = results_rsa
       df["SecondaryStructure"] = results_str
+
+
 
     elif measure == "ResidueDepth":
       rd = ResidueDepth(model)
