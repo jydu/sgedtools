@@ -15,7 +15,8 @@ List all residues in a PDB file:
 ```bash
 python ../src/sged-structure-list.py \
          --pdb=3EG4.pdb \
-         --output=3EG4_sites.tsv
+         --output=3EG4_sites.tsv \
+         --chain=A
 ```
 
 Create a PDB index:

@@ -73,7 +73,7 @@ class ModelSelect(Select):
 
 # Start parsing
 with open(sged_file) as csv_file:
-  df = pandas.read_csv(csv_file, sep = delim, dtype = str)
+  df = pandas.read_csv(csv_file, sep = delim, dtype = str, comment = '#')
   groups = df[group_col]
   for measure in measures:
 
@@ -94,9 +94,12 @@ with open(sged_file) as csv_file:
         calphas   = []
         for j, pos in enumerate(positions):
           insert_code = ' '
-          if len(pos) > 3:
-            insert_code = pos[3:]
-            pos = pos[:3]
+          try :
+            int(pos)
+          except :
+            n = len(pos)
+            insert_code = pos[(n-1):] #Assuming insertion code is one character only
+            pos = pos[:(n-1)]
           if chain[pos].resname == states[j]:
             calphas.append(chain[(' ', int(pos), insert_code)]['CA'])
           else:
@@ -136,10 +139,16 @@ with open(sged_file) as csv_file:
         num_contact3 = [0 for x in positions]
         for j, pos in enumerate(positions):
           insert_code = ' '
-          if len(pos) > 3:
-            insert_code = pos[3:]
-            pos = pos[:3]
+          try :
+            int(pos)
+          except :
+            n = len(pos)
+            insert_code = pos[(n-1):] #Assuming insertion code is one character only
+            pos = pos[:(n-1)]
           res_id = (' ', int(pos), insert_code)
+          if not res_id in chain:
+            res_id = ("H_%s" % states[j], int(pos), insert_code) #Try with HETATM
+
           if chain[res_id].resname == states[j]:
             #Compute distance of this residue with all others in the structure:
             for search_chain in model:
@@ -197,9 +206,12 @@ with open(sged_file) as csv_file:
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
           insert_code = ' '
-          if len(pos) > 3:
-            insert_code = pos[3:]
-            pos = pos[:3]
+          try :
+            int(pos)
+          except :
+            n = len(pos)
+            insert_code = pos[(n-1):] #Assuming insertion code is one character only
+            pos = pos[:(n-1)]
           if (chain_sel, (' ', int(pos), insert_code)) in dssp:
             res = dssp[(chain_sel, (' ', int(pos), insert_code))] 
             states_res = states[j].title()
@@ -262,9 +274,12 @@ with open(sged_file) as csv_file:
         rsa       = [numpy.nan for x in positions]
         for j, pos in enumerate(positions):
           insert_code = ' '
-          if len(pos) > 3:
-            insert_code = pos[3:]
-            pos = pos[:3]
+          try :
+            int(pos)
+          except :
+            n = len(pos)
+            insert_code = pos[(n-1):] #Assuming insertion code is one character only
+            pos = pos[:(n-1)]
           if (chain_sel, (' ', int(pos), insert_code)) in dssp:
             res = dssp[(chain_sel, (' ', int(pos), insert_code))]
             states_res = states[j].title()
@@ -292,29 +307,34 @@ with open(sged_file) as csv_file:
 
 
     elif measure == "ResidueDepth":
-      rd = ResidueDepth(model)
-
       results_res_depth = [numpy.nan for x in groups]
       results_ca_depth  = [numpy.nan for x in groups]
-      
-      for i, g in enumerate(groups):
-        tmp = g[1:(len(g)-1)]
-        tmp = tmp.replace(' ', '')
-        res_sel = tmp.split(";")
-        # Ignore missing data:
-        res_sel_cleaned = [x for x in res_sel if x != "NA"]
-        positions = [x[3:] for x in res_sel_cleaned]
-        res_depth = [numpy.nan for x in res_sel_cleaned]
-        ca_depth  = [numpy.nan for x in res_sel_cleaned]
-        for j, pos in enumerate(positions):
-          insert_code = ' '
-          if len(pos) > 3:
-            insert_code = pos[3:]
-            pos = pos[:3]
-          if (chain_sel, (' ', int(pos), insert_code)) in rd:
-            (res_depth[j], ca_depth[j]) = rd[(chain_sel, (' ', int(pos), insert_code))]
-        results_res_depth[i] = numpy.nanmean(res_depth) if len(res_depth) > 0 and not all(numpy.isnan(res_depth)) else numpy.nan
-        results_ca_depth[i]  = numpy.nanmean( ca_depth) if len( ca_depth) > 0 and not all(numpy.isnan( ca_depth)) else numpy.nan
+     
+      try :
+        rd = ResidueDepth(model)
+        for i, g in enumerate(groups):
+          tmp = g[1:(len(g)-1)]
+          tmp = tmp.replace(' ', '')
+          res_sel = tmp.split(";")
+          # Ignore missing data:
+          res_sel_cleaned = [x for x in res_sel if x != "NA"]
+          positions = [x[3:] for x in res_sel_cleaned]
+          res_depth = [numpy.nan for x in res_sel_cleaned]
+          ca_depth  = [numpy.nan for x in res_sel_cleaned]
+          for j, pos in enumerate(positions):
+            insert_code = ' '
+            try :
+              int(pos)
+            except :
+              n = len(pos)
+              insert_code = pos[(n-1):] #Assuming insertion code is one character only
+              pos = pos[:(n-1)]
+            if (chain_sel, (' ', int(pos), insert_code)) in rd:
+              (res_depth[j], ca_depth[j]) = rd[(chain_sel, (' ', int(pos), insert_code))]
+          results_res_depth[i] = numpy.nanmean(res_depth) if len(res_depth) > 0 and not all(numpy.isnan(res_depth)) else numpy.nan
+          results_ca_depth[i]  = numpy.nanmean( ca_depth) if len( ca_depth) > 0 and not all(numpy.isnan( ca_depth)) else numpy.nan
+      except:
+        print("ERROR! Computation of molecular surface failed. Outputing 'nan'.")
       df["ResidueDepth"] = results_res_depth
       df[ "CalphaDepth"] = results_ca_depth
 

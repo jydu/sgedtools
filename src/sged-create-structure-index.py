@@ -11,6 +11,7 @@ from Bio.PDB import *
 from Bio.SeqUtils import *
 from Bio import SeqIO
 from Bio import pairwise2
+from Bio.Data import SCOPData
 from Bio.SubsMat import MatrixInfo as matlist
 blosum62 = matlist.blosum62
 parser = PDBParser()
@@ -70,17 +71,12 @@ for pdb_file in pdb_files:
         #Incomplete residue, most likely only Ca
         nb_incomplete = nb_incomplete + 1
 
-      res = residue.get_resname().title()
-      letter = ""
-      if is_aa(residue, standard = True):
-        letter = IUPACData.protein_letters_3to1[res]
-      elif res == "Mse":
-        letter = "M"
-      elif res == "Cse":
-        letter = "C"
-      else:
-        letter = "X"
-      chain_seq = chain_seq + letter
+      if is_aa(residue):
+        res = residue.get_resname().upper()
+        letter = SCOPData.protein_letters_3to1[res]
+        if not letter in Polypeptide.d1_to_index:
+          letter = 'X'
+        chain_seq = chain_seq + letter
 
     if len(chain_seq) > 0:
       pdb_seqs[pdb_file + "|" + chain_id] = chain_seq
@@ -142,25 +138,13 @@ def res_to_str(id) :
   return s
 
 for residue in chain:
-  res = residue.get_resname().title()
-  if is_aa(residue, standard = True):
+  if is_aa(residue) :
+    res = residue.get_resname().upper()
     pos = pos + 1
-    letter = IUPACData.protein_letters_3to1[res]
+    letter = SCOPData.protein_letters_3to1[res]
+    if not letter in Polypeptide.d1_to_index:
+      letter = 'X'
     pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
-  elif res == "Mse":
-    pos = pos + 1
-    letter = "M"
-    pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
-  elif res == "Cse":
-    pos = pos + 1
-    letter = "C"
-    pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
-  else:
-    pos = pos + 1
-    letter = "X"
-    pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
-
-
 
 # Get the best alignment:
 pairwise_aln = pairwise2.align.globaldx(str(aln_seq.seq).replace('-', ''), pdb_seq, blosum62)
