@@ -9,6 +9,15 @@ python ../src/sged-ungroup.py \
          --output=HOG000003295_sites.tsv
 ```
 
+List all residues in a PDB file:
+================================
+
+```bash
+python ../src/sged-structure-list.py \
+         --pdb=3EG4.pdb \
+         --output=3EG4_sites.tsv
+```
+
 Create a PDB index:
 ===================
 
