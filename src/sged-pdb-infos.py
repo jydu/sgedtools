@@ -35,7 +35,7 @@ for arg, val in arguments:
     print "PDB file: %s" % pdb_file
   elif arg in ("-o", "--output"):
     output_file = val
-    print "Output ungrouped file: %s" % output_file
+    print "Output info file: %s" % output_file
   elif arg in ("-m", "--measures"):
     measures = val.split(',')
   elif arg in ("-g", "--groups"):
@@ -144,7 +144,7 @@ with open(sged_file) as csv_file:
             #Compute distance of this residue with all others in the structure:
             for search_chain in model:
               for search_res in search_chain:
-                if is_aa(search_res) and search_res.get_id() != res_id:
+                if is_aa(search_res) and search_res.get_id() != res_id and 'CA' in search_res and 'CA' in chain[res_id] :
                   distance = search_res['CA'] - chain[res_id]['CA']
                   if distance <= 5:
                     num_contact1[j] = num_contact1[j] + 1
@@ -155,9 +155,9 @@ with open(sged_file) as csv_file:
           else:
             print "ERROR! There is no residue %s in PDB file." % res_sel[j]
             exit(-2)
-        results_contact1[i] = numpy.mean(num_contact1)
-        results_contact2[i] = numpy.mean(num_contact2)
-        results_contact3[i] = numpy.mean(num_contact3)
+        results_contact1[i] = numpy.mean(num_contact1) if len(num_contact1) > 0 else numpy.nan
+        results_contact2[i] = numpy.mean(num_contact2) if len(num_contact2) > 0 else numpy.nan
+        results_contact3[i] = numpy.mean(num_contact3) if len(num_contact3) > 0 else numpy.nan
       df["NbContact5" ] = results_contact1
       df["NbContact8"] = results_contact2
       df["NbContact10"] = results_contact3
