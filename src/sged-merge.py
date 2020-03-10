@@ -32,7 +32,7 @@ for arg, val in arguments:
     print "Second SGED file: %s" % sged_file2
   elif arg in ("-o", "--output"):
     output_file = val
-    print "Output ungrouped file: %s" % output_file
+    print "Output merged file: %s" % output_file
   elif arg in ("-g", "--groups"):
     group_col = val
     print "PDB coordinates are in column: %s" % group_col
@@ -56,7 +56,7 @@ with open(sged_file2) as csv_file2:
   df2 = pandas.read_csv(csv_file2, sep = delim, dtype = str, comment = '#')
 
 frames = [df1, df2]
-df = pandas.merge(df1, df2, how = 'outer', on = group_col)
+df = pandas.merge(df1, df2, how = join_type, on = group_col)
 
 # Write results:
 df.to_csv(output_file, sep = delim, na_rep = 'NA', index = False)
