@@ -187,55 +187,59 @@ with open(sged_file) as csv_file:
         if not os.path.isfile(pdb_file2):
           io.save(pdb_file2, ModelSelect())
 
-      dssp = DSSP(model, pdb_file2)
       results_str = [numpy.nan for x in groups]
       results_rsa_max = [numpy.nan for x in groups]
       results_rsa_min = [numpy.nan for x in groups]
       results_rsa_med = [numpy.nan for x in groups]
       results_rsa_mea = [numpy.nan for x in groups]
       
-      for i, g in enumerate(groups):
-        tmp = g[1:(len(g)-1)]
-        tmp = tmp.replace(' ', '')
-        res_sel = tmp.split(";")
-        # Ignore missing data:
-        res_sel_cleaned = [x for x in res_sel if x != "NA"]
-        positions = [x[3: ] for x in res_sel_cleaned]
-        states    = [x[0:3] for x in res_sel_cleaned]
-        motifs    = [numpy.nan for x in positions]
-        rsa       = [numpy.nan for x in positions]
-        for j, pos in enumerate(positions):
-          insert_code = ' '
-          try :
-            int(pos)
-          except :
-            n = len(pos)
-            insert_code = pos[(n-1):] #Assuming insertion code is one character only
-            pos = pos[:(n-1)]
-          if (chain_sel, (' ', int(pos), insert_code)) in dssp:
-            res = dssp[(chain_sel, (' ', int(pos), insert_code))] 
-            states_res = states[j].title()
-            if states_res in IUPACData.protein_letters_3to1:
-              letter = IUPACData.protein_letters_3to1[states_res]
+      try :
+        dssp = DSSP(model, pdb_file2)
+
+        for i, g in enumerate(groups):
+          tmp = g[1:(len(g)-1)]
+          tmp = tmp.replace(' ', '')
+          res_sel = tmp.split(";")
+          # Ignore missing data:
+          res_sel_cleaned = [x for x in res_sel if x != "NA"]
+          positions = [x[3: ] for x in res_sel_cleaned]
+          states    = [x[0:3] for x in res_sel_cleaned]
+          motifs    = [numpy.nan for x in positions]
+          rsa       = [numpy.nan for x in positions]
+          for j, pos in enumerate(positions):
+            insert_code = ' '
+            try :
+              int(pos)
+            except :
+              n = len(pos)
+              insert_code = pos[(n-1):] #Assuming insertion code is one character only
+              pos = pos[:(n-1)]
+            if (chain_sel, (' ', int(pos), insert_code)) in dssp:
+              res = dssp[(chain_sel, (' ', int(pos), insert_code))] 
+              states_res = states[j].title()
+              if states_res in IUPACData.protein_letters_3to1:
+                letter = IUPACData.protein_letters_3to1[states_res]
+              else:
+                letter = "X"
+              if res[1] == letter:
+                 motifs[j] = res[2]
+                 if res[3] == 'NA':
+                   rsa[j] = numpy.nan
+                 else:
+                   rsa[j] = res[3]
+              else:
+                print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+                exit(-2)
             else:
-              letter = "X"
-            if res[1] == letter:
-               motifs[j] = res[2]
-               if res[3] == 'NA':
-                 rsa[j] = numpy.nan
-               else:
-                 rsa[j] = res[3]
-            else:
-              print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
-              exit(-2)
-          else:
-            motifs[j] = " "
-            rsa[j] = numpy.nan
-        results_str[i] = "".join(motifs)
-        results_rsa_max[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
-        results_rsa_min[i] = numpy.nanmin(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
-        results_rsa_med[i] = numpy.nanmedian(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
-        results_rsa_mea[i] = numpy.nanmean(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+              motifs[j] = " "
+              rsa[j] = numpy.nan
+          results_str[i] = "".join(motifs)
+          results_rsa_max[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+          results_rsa_min[i] = numpy.nanmin(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+          results_rsa_med[i] = numpy.nanmedian(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+          results_rsa_mea[i] = numpy.nanmean(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+      except:
+        print("ERROR! DSSP computation failed. Outputing 'nan'.")
       df["RsaMax"]    = results_rsa_max
       df["RsaMin"]    = results_rsa_min
       df["RsaMedian"] = results_rsa_med
@@ -258,49 +262,53 @@ with open(sged_file) as csv_file:
         if not os.path.isfile(pdb_file2):
           io.save(pdb_file2, ModelSelect())
 
-      dssp = DSSP(model, pdb_file2)
       results_str = [numpy.nan for x in groups]
       results_rsa = [numpy.nan for x in groups]
       
-      for i, g in enumerate(groups):
-        tmp = g[1:(len(g)-1)]
-        tmp = tmp.replace(' ', '')
-        res_sel = tmp.split(";")
-        # Ignore missing data:
-        res_sel_cleaned = [x for x in res_sel if x != "NA"]
-        positions = [x[3: ] for x in res_sel_cleaned]
-        states    = [x[0:3] for x in res_sel_cleaned]
-        motifs    = [numpy.nan for x in positions]
-        rsa       = [numpy.nan for x in positions]
-        for j, pos in enumerate(positions):
-          insert_code = ' '
-          try :
-            int(pos)
-          except :
-            n = len(pos)
-            insert_code = pos[(n-1):] #Assuming insertion code is one character only
-            pos = pos[:(n-1)]
-          if (chain_sel, (' ', int(pos), insert_code)) in dssp:
-            res = dssp[(chain_sel, (' ', int(pos), insert_code))]
-            states_res = states[j].title()
-            if states_res in IUPACData.protein_letters_3to1:
-              letter = IUPACData.protein_letters_3to1[states_res]
+      try :
+        dssp = DSSP(model, pdb_file2)
+      
+        for i, g in enumerate(groups):
+          tmp = g[1:(len(g)-1)]
+          tmp = tmp.replace(' ', '')
+          res_sel = tmp.split(";")
+          # Ignore missing data:
+          res_sel_cleaned = [x for x in res_sel if x != "NA"]
+          positions = [x[3: ] for x in res_sel_cleaned]
+          states    = [x[0:3] for x in res_sel_cleaned]
+          motifs    = [numpy.nan for x in positions]
+          rsa       = [numpy.nan for x in positions]
+          for j, pos in enumerate(positions):
+            insert_code = ' '
+            try :
+              int(pos)
+            except :
+              n = len(pos)
+              insert_code = pos[(n-1):] #Assuming insertion code is one character only
+              pos = pos[:(n-1)]
+            if (chain_sel, (' ', int(pos), insert_code)) in dssp:
+              res = dssp[(chain_sel, (' ', int(pos), insert_code))]
+              states_res = states[j].title()
+              if states_res in IUPACData.protein_letters_3to1:
+                letter = IUPACData.protein_letters_3to1[states_res]
+              else:
+                letter = "X"
+              if res[1] == letter:
+                 motifs[j] = res[2]
+                 if res[3] == 'NA':
+                   rsa[j] = numpy.nan
+                 else:
+                   rsa[j] = res[3]
+              else:
+                print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+                exit(-2)
             else:
-              letter = "X"
-            if res[1] == letter:
-               motifs[j] = res[2]
-               if res[3] == 'NA':
-                 rsa[j] = numpy.nan
-               else:
-                 rsa[j] = res[3]
-            else:
-              print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
-              exit(-2)
-          else:
-             motifs[j] = " "
-             rsa[j] = numpy.nan
-        results_str[i] = "".join(motifs) if len(motifs) > 0 else numpy.nan
-        results_rsa[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+               motifs[j] = " "
+               rsa[j] = numpy.nan
+          results_str[i] = "".join(motifs) if len(motifs) > 0 else numpy.nan
+          results_rsa[i] = numpy.nanmax(rsa) if len(rsa) > 0 and not all(numpy.isnan(rsa)) else numpy.nan
+      except:  
+        print("ERROR! DSSP computation failed. Outputing 'nan'.")
       df["Rsa"]                = results_rsa
       df["SecondaryStructure"] = results_str
 
