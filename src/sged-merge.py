@@ -11,8 +11,8 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:t:o:g:c"
-full_opt = ["sged1=", "sged2=", "output=", "groups=", "chain=", "csv"]
+unix_opt = "s:t:o:g:j:c"
+full_opt = ["sged1=", "sged2=", "output=", "groups=", "join=", "csv"]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -22,6 +22,7 @@ except getopt.error as err:
 tabsep = True # TSV by default
 group_col = "Group"
 measures = []
+join_type = "outer"
 for arg, val in arguments:
   if arg in ("-s", "--sged1"):
     sged_file1 = val
@@ -35,6 +36,9 @@ for arg, val in arguments:
   elif arg in ("-g", "--groups"):
     group_col = val
     print "PDB coordinates are in column: %s" % group_col
+  elif arg in ("-j", "--join"):
+    join_type =  val
+    print "Join type: %s" % join_type
   elif arg in ("-c", "--csv"):
     tabsep = False
 
@@ -47,9 +51,9 @@ else:
 
 # Start parsing
 with open(sged_file1) as csv_file1:
-  df1 = pandas.read_csv(csv_file1, sep = delim, dtype = str)
+  df1 = pandas.read_csv(csv_file1, sep = delim, dtype = str, comment = '#')
 with open(sged_file2) as csv_file2:
-  df2 = pandas.read_csv(csv_file2, sep = delim, dtype = str)
+  df2 = pandas.read_csv(csv_file2, sep = delim, dtype = str, comment = '#')
 
 frames = [df1, df2]
 df = pandas.merge(df1, df2, how = 'outer', on = group_col)
