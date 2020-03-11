@@ -97,6 +97,7 @@ with open(sged_file) as csv_file:
         positions = [ x[3:] for x in res_sel_cleaned]
         states    = [ x[:3] for x in res_sel_cleaned]
         calphas   = []
+        incomplete = False
         for j, pos in enumerate(positions):
           insert_code = ' '
           try :
@@ -110,19 +111,24 @@ with open(sged_file) as csv_file:
             res_id = ("H_%s" % states[j], int(pos), insert_code) #Try with HETATM
 
           if chain[res_id].resname == states[j]:
-            calphas.append(chain[res_id]['CA'])
+            if 'CA' in chain[res_id]:
+              calphas.append(chain[res_id]['CA'])
+            else:
+              incomplete = True
+              print("WARNING! Residue %s has no CA. Distances cannot be computed for group %s." % (chain[res_id].resname, i+1))
           else:
-            print "ERROR! There is no residue %s in PDB file." % res_sel[j]
+            print("ERROR! There is no residue %s in PDB file." % res_sel[j])
             exit(-2)
         # Compute all pairwise distances between residues CA:
-        distances = []
-        for j in range(1, len(calphas)):
-          for k in range(j):
-            distances.append(calphas[j] - calphas[k])
-        results_max[i] = numpy.max(distances) if len(distances) > 0 else numpy.nan
-        results_min[i] = numpy.min(distances) if len(distances) > 0 else numpy.nan
-        results_med[i] = numpy.median(distances) if len(distances) > 0 else numpy.nan
-        results_mea[i] = numpy.mean(distances) if len(distances) > 0 else numpy.nan
+        if not incomplete:
+          distances = []
+          for j in range(1, len(calphas)):
+            for k in range(j):
+              distances.append(calphas[j] - calphas[k])
+          results_max[i] = numpy.max(distances) if len(distances) > 0 else numpy.nan
+          results_min[i] = numpy.min(distances) if len(distances) > 0 else numpy.nan
+          results_med[i] = numpy.median(distances) if len(distances) > 0 else numpy.nan
+          results_mea[i] = numpy.mean(distances) if len(distances) > 0 else numpy.nan
       df["AlphaDistMax"]    = results_max
       df["AlphaDistMin"]    = results_min
       df["AlphaDistMedian"] = results_med
@@ -147,6 +153,7 @@ with open(sged_file) as csv_file:
         positions = [ x[3:] for x in res_sel_cleaned]
         states    = [ x[:3] for x in res_sel_cleaned]
         calphas   = []
+        incomplete = False
         for j, pos in enumerate(positions):
           insert_code = ' '
           try :
@@ -160,12 +167,16 @@ with open(sged_file) as csv_file:
             res_id = ("H_%s" % states[j], int(pos), insert_code) #Try with HETATM
 
           if chain[res_id].resname == states[j]:
-            calphas.append(chain[res_id]['CA'])
+            if 'CA' in chain[res_id]:
+              calphas.append(chain[res_id]['CA'])
+            else:
+              incomplete = True
+              print("WARNING! Residue %s has no CA. Distances cannot be computed for group %s." % (chain[res_id].resname, i+1))
           else:
-            print "ERROR! There is no residue %s in PDB file." % res_sel[j]
+            print("ERROR! There is no residue %s in PDB file." % res_sel[j])
             exit(-2)
         # Compute all pairwise distances between residues CA:
-        if len(calphas) > 1:
+        if not incomplete and len(calphas) > 1:
           distances = []
           for j in range(0, len(calphas) - 1):
             for k in range(j + 1, len(calphas)):
