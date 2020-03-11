@@ -8,6 +8,7 @@
 import getopt, sys, os.path
 import pandas
 import numpy
+import scipy.cluster.hierarchy
 from Bio.PDB import *
 from Bio.PDB.DSSP import DSSP
 from Bio.SeqUtils import *
@@ -79,6 +80,10 @@ with open(sged_file) as csv_file:
 
     if measure == "AlphaDist":
 
+      """
+      Compute Ca-Ca distances between all group members and report group statistics
+      """
+
       results_max = [numpy.nan for x in groups]
       results_min = [numpy.nan for x in groups]
       results_med = [numpy.nan for x in groups]
@@ -100,8 +105,12 @@ with open(sged_file) as csv_file:
             n = len(pos)
             insert_code = pos[(n-1):] #Assuming insertion code is one character only
             pos = pos[:(n-1)]
-          if chain[pos].resname == states[j]:
-            calphas.append(chain[(' ', int(pos), insert_code)]['CA'])
+          res_id = (' ', int(pos), insert_code)
+          if not res_id in chain:
+            res_id = ("H_%s" % states[j], int(pos), insert_code) #Try with HETATM
+
+          if chain[res_id].resname == states[j]:
+            calphas.append(chain[res_id]['CA'])
           else:
             print "ERROR! There is no residue %s in PDB file." % res_sel[j]
             exit(-2)
@@ -121,8 +130,61 @@ with open(sged_file) as csv_file:
 
 
 
+    if measure == "ContactSubgraphs" :
+
+      """
+      Compute the number of subgraphs based on a certain threshold distance
+      """
+
+      results_nb_subs = [numpy.nan for x in groups]
+      results_nb_mapped = [numpy.nan for x in groups]
+      for i, g in enumerate(groups):
+        tmp = g[1:(len(g)-1)]
+        tmp = tmp.replace(' ', '')
+        res_sel = tmp.split(";")
+        # Ignore missing data:
+        res_sel_cleaned = [x for x in res_sel if x != "NA"]
+        positions = [ x[3:] for x in res_sel_cleaned]
+        states    = [ x[:3] for x in res_sel_cleaned]
+        calphas   = []
+        for j, pos in enumerate(positions):
+          insert_code = ' '
+          try :
+            int(pos)
+          except :
+            n = len(pos)
+            insert_code = pos[(n-1):] #Assuming insertion code is one character only
+            pos = pos[:(n-1)]
+          res_id = (' ', int(pos), insert_code)
+          if not res_id in chain:
+            res_id = ("H_%s" % states[j], int(pos), insert_code) #Try with HETATM
+
+          if chain[res_id].resname == states[j]:
+            calphas.append(chain[res_id]['CA'])
+          else:
+            print "ERROR! There is no residue %s in PDB file." % res_sel[j]
+            exit(-2)
+        # Compute all pairwise distances between residues CA:
+        if len(calphas) > 1:
+          distances = []
+          for j in range(0, len(calphas) - 1):
+            for k in range(j + 1, len(calphas)):
+              distances.append(calphas[j] - calphas[k])
+          tree = scipy.cluster.hierarchy.single(distances)
+          clusters = scipy.cluster.hierarchy.fcluster(tree, 8, criterion = 'distance') # Threshold of 8 Angstroms
+          results_nb_subs[i] = len(numpy.unique(clusters))
+          results_nb_mapped[i] = len(clusters)
+      df["ContactSubgraphs.NbSubgraphs" ] = results_nb_subs
+      df["ContactSubgraphs.NbMapped" ] = results_nb_mapped
+
+
+
     if measure == "ContactMap":
-      # This provides the mean number of contacts per residue at various thresholds
+
+      """
+      This provides the mean number of contacts per residue at various thresholds
+      """
+
       results_contact1 = [numpy.nan for x in groups]
       results_contact2 = [numpy.nan for x in groups]
       results_contact3 = [numpy.nan for x in groups]
