@@ -115,3 +115,13 @@ python ../src/sged-merge.py \
          --output=HOG000003295_charge_merged.tsv
 
 ```
+
+Conversion from other software:
+===============================
+
+## DisEMBL
+
+```bash
+python ../src/sged-disembl2sged.py -d HOG000003295_scores.tsv -o HOG000003295_scores.sged
+```
+
