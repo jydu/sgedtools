@@ -134,7 +134,7 @@ python3 ../src/sged-translate-coords.py \
          --sged=HOG000003295_scores.sged \
          --index=HOG000003295_SeqIndex.txt \
          --output=HOG000003295_scores_ref.sged \
-         --name=RefSeq \
+         --name=AlnPos \
          --reverse
 ```
 
