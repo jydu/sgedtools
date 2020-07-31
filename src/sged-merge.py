@@ -12,7 +12,7 @@ cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
 unix_opt = "s:t:o:g:h:j:c"
-full_opt = ["sged1=", "sged2=", "output=", "groups=", "groups1=", "groups2=", "join=", "csv"]
+full_opt = ["sged1=", "sged2=", "output=", "group=", "group1=", "group2=", "join=", "csv"]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -34,10 +34,10 @@ for arg, val in arguments:
   elif arg in ("-o", "--output"):
     output_file = val
     print "Output merged file: %s" % output_file
-  elif arg in ("-g", "--groups", "--groups1"): # Note: if only this arg is passed, group col name is assumed to be identical in both files
+  elif arg in ("-g", "--group", "--group1"): # Note: if only this arg is passed, group col name is assumed to be identical in both files
     group_col1 = val
     print "Coordinates are in column: %s" % group_col1
-  elif arg in ("-h", "--groups2"):
+  elif arg in ("-h", "--group2"):
     group_col2 = val
     print "Coordinates for second file are in column: %s" % group_col2
   elif arg in ("-j", "--join"):
