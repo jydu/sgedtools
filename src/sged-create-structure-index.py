@@ -32,18 +32,18 @@ exclude_incomplete = False
 for arg, val in arguments:
   if arg in ("-p", "--pdb"):
     pdb_files = pdb_files + glob.glob(val)
-    print "PDB file: %s" % val
+    print("PDB file: %s" % val)
   elif arg in ("-a", "--alignment"):
     aln_file = val
-    print "Alignment file: %s" % aln_file
+    print("Alignment file: %s" % aln_file)
   elif arg in ("-o", "--output"):
     output_file = val
-    print "Output index file: %s" % output_file
+    print("Output index file: %s" % output_file)
   elif arg in ("-x", "--exclude-incomplete"):
     exclude_incomplete = True
 #TODO: check that all args are provided, that file exist, and eventually allow for various alignment formats.
 
-print "Parsing structure(s)..."
+print("Parsing structure(s)...")
 
 pdb_seqs = dict()
 
@@ -91,10 +91,10 @@ if exclude_incomplete:
       print("Sequence %s has a proportion of incomplete residues equal to %s and is discarded." % (seq, prop))
       del pdb_seqs[seq]
 
-print "Compare structure(s) and alignment..."
+print("Compare structure(s) and alignment...")
 
 # We retrieve the original sequence from the alignment:
-with open(aln_file, "rU") as handle:
+with open(aln_file, "r") as handle:
   aln_seqs = SeqIO.to_dict(SeqIO.parse(handle, "ig")) 
 
 # Align each PDB sequence with each alignment sequence and get the best score
@@ -109,11 +109,11 @@ for pdb_id, pdb_seq in pdb_seqs.items():
       best_pdb = pdb_id
       best_aln = aln_id
 
-print "Best match between sequence %s and chain %s, with a score of %s." % (best_aln, best_pdb, best_score) 
+print("Best match between sequence %s and chain %s, with a score of %s." % (best_aln, best_pdb, best_score))
 aln_seq = aln_seqs[best_aln]
 pdb_seq = pdb_seqs[best_pdb]
 
-print "Build the index..."
+print("Build the index...")
 (best_pdb_file, best_pdb_chain) = best_pdb.split("|")
 structure = parser.get_structure('STRUCT', best_pdb_file)
 model = structure[0]
@@ -182,14 +182,14 @@ for k, j in indexes[0].items():
     if k in indexes[i]:
       if indexes[i][k] != j:
         test = False
-        print "Position %s is ambiguous (2)." % k
+        print("Position %s is ambiguous (2)." % k)
     else:
       test = False
-      print "Position %s is ambiguous (1)." % k
+      print("Position %s is ambiguous (1)." % k)
   if test:
     seq_index[k] = j
 
-print "Write the results..."
+print("Write the results...")
 
 # Now convert each alignment position into a PDB position and write the result to a file:
 with open(output_file, "w") as handle:
@@ -207,6 +207,6 @@ with open(output_file, "w") as handle:
     else:
       handle.write("%s,NA\n" % (aln_pos + 1))
 
-print "Done."
+print("Done.")
 
 
