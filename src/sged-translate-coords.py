@@ -16,17 +16,17 @@ full_opt = ["sged=", "output=", "index=", "name=", "csv"]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
-  print (str(err))
+  print(str(err))
   sys.exit(2)
 
 tabsep = True # TSV by default
 for arg, val in arguments:
   if arg in ("-s", "--sged"):
     sged_file = val
-    print "SGED file: %s" % sged_file
+    print("SGED file: %s" % sged_file)
   elif arg in ("-o", "--output"):
     output_file = val
-    print "Output translated file: %s" % output_file
+    print("Output translated file: %s" % output_file)
   elif arg in ("-i", "--index"):
     index_file = val
   elif arg in ("-n", "--name"):
@@ -35,10 +35,10 @@ for arg, val in arguments:
     tabsep = False
 
 if tabsep:
-  print "SGED file is in TSV format"
+  print("SGED file is in TSV format")
   delim = '\t'
 else:
-  print "SGED file is in CSV format"
+  print("SGED file is in CSV format")
   delim = ','
 
 # Get index:
@@ -61,5 +61,5 @@ with open(sged_file) as csv_file:
       tln_group = "[%s]" % ";".join(translations)
       handle.write("%s%s%s%s%s\n" % (g, delim, tln_group, delim, delim.join(df.iloc[i])))
 
-print "Done."
+print("Done.")
 
