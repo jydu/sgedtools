@@ -11,8 +11,8 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:o:i:n:c"
-full_opt = ["sged=", "output=", "index=", "name=", "csv"]
+unix_opt = "s:o:i:n:rc"
+full_opt = ["sged=", "output=", "index=", "name=", "reverse", "csv"]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -20,6 +20,7 @@ except getopt.error as err:
   sys.exit(2)
 
 tabsep = True # TSV by default
+reversed_index = False # Tells if the index is inverted (second column is the key, the first one being the value). Works only if the index has 1:1 matches.
 for arg, val in arguments:
   if arg in ("-s", "--sged"):
     sged_file = val
@@ -31,18 +32,26 @@ for arg, val in arguments:
     index_file = val
   elif arg in ("-n", "--name"):
     tln_name = val
+  elif arg in ("-r", "--reverse"):
+    reversed_index = True
   elif arg in ("-c", "--csv"):
     tabsep = False
 
+
 if tabsep:
-  print("SGED file is in TSV format")
+  print("SGED file is in TSV format.")
   delim = '\t'
 else:
-  print("SGED file is in CSV format")
+  print("SGED file is in CSV format.")
   delim = ','
 
+index_col = 0
+if reversed_index:
+  print("Reverse index will be used.")
+  index_col = 1
+
 # Get index:
-index = pandas.read_csv(open(index_file), sep = ',', comment = '#', dtype = str, index_col = 0)
+index = pandas.read_csv(open(index_file), sep = ',', comment = '#', dtype = str, index_col = index_col)
 index.index = index.index.map(str)
 index.dropna(inplace = True)
 

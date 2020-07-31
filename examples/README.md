@@ -43,13 +43,13 @@ Translate according to PDB:
 ===========================
 
 ```bash
-python ../src/sged-translate-coords.py \
+python3 ../src/sged-translate-coords.py \
          --sged=HOG000003295_charge_stats_pvalues.csv \
          --index=HOG000003295_PdbIndex.txt \
          --output=HOG000003295_charge_stats_pvalues_PDB.csv \
          --name=PDB
 
-python ../src/sged-translate-coords.py \
+python3 ../src/sged-translate-coords.py \
          --sged=HOG000003295_sites.tsv \
          --index=HOG000003295_PdbIndex.txt \
          --output=HOG000003295_sites_PDB.tsv \
@@ -105,8 +105,6 @@ python ../src/sged-ungroup.py \
          --output=HOG000003295_charge_significant_sites.tsv
 ```
 
-
-
 ```bash
 python ../src/sged-merge.py \
          --sged1=HOG000003295_charge_siteInfos_PDB_infos.tsv \
@@ -125,8 +123,19 @@ Conversion from other software:
 python3 ../src/sged-disembl2sged.py -d HOG000003295_scores.tsv -o HOG000003295_scores.sged
 ```
 Convert to alignment positions. First create an index:
+
 ```bash
 python3 ../src/sged-create-sequence-index.py -a HOG000003295_bppalnscore.mase -r seq451 -o HOG000003295_SeqIndex.txt
 ```
 (seq451 was the sequence used to predict intrinsically disordered regions)
+
+```bash
+python3 ../src/sged-translate-coords.py \
+         --sged=HOG000003295_scores.sged \
+         --index=HOG000003295_SeqIndex.txt \
+         --output=HOG000003295_scores_ref.sged \
+         --name=RefSeq \
+         --reverse
+```
+
 
