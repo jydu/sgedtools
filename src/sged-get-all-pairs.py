@@ -53,7 +53,7 @@ for i in range(len(df)-1):
     group2 = df.loc[j, group_col][1:-1] # removes []
     newgroups.append("[%s;%s]" % (group1,group2))
 
-newdf = pandas.DataFrame({ 'Group' : newgroups })
+newdf = pandas.DataFrame({ group_col : newgroups })
 
 # Write results:
 newdf.to_csv(output_file, sep = delim, na_rep = 'NA', index = False)

@@ -120,8 +120,8 @@ Get distance between all pairs of sites in a PDB:
 ```bash
 python3 ../src/sged-structure-list.py \
         --pdb=3EG4.pdb \
-        --output=3EG4_sites.tsv \
-        --chain=A
+        --chain=A \
+        --output=3EG4_sites.tsv
 
 python3 ../src/sged-get-all-pairs.py \
         --sged=3EG4_sites.tsv \
