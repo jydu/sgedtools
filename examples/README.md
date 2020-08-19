@@ -130,7 +130,7 @@ python3 ../src/sged-get-all-pairs.py \
 
 python3 ../src/sged-structure-infos.py \
         --sged=3EG4_sitepairs.tsv \
-        --group=Group \
+        --group=PDB \
         --pdb=3EG4.pdb \
         --chain=A \
         --measures=AlphaDist,DSSPsum \
