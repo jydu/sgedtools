@@ -27,30 +27,30 @@ join_type = "outer"
 for arg, val in arguments:
   if arg in ("-s", "--sged1"):
     sged_file1 = val
-    print "First SGED file: %s" % sged_file1
+    print("First SGED file: %s" % sged_file1)
   elif arg in ("-t", "--sged2"):
     sged_file2 = val
-    print "Second SGED file: %s" % sged_file2
+    print("Second SGED file: %s" % sged_file2)
   elif arg in ("-o", "--output"):
     output_file = val
-    print "Output merged file: %s" % output_file
+    print("Output merged file: %s" % output_file)
   elif arg in ("-g", "--group", "--group1"): # Note: if only this arg is passed, group col name is assumed to be identical in both files
     group_col1 = val
-    print "Coordinates are in column: %s" % group_col1
+    print("Coordinates are in column: %s" % group_col1)
   elif arg in ("-h", "--group2"):
     group_col2 = val
-    print "Coordinates for second file are in column: %s" % group_col2
+    print("Coordinates for second file are in column: %s" % group_col2)
   elif arg in ("-j", "--join"):
     join_type =  val
-    print "Join type: %s" % join_type
+    print("Join type: %s" % join_type)
   elif arg in ("-c", "--csv"):
     tabsep = False
 
 if tabsep:
-  print "SGED file is in TSV format"
+  print("SGED file is in TSV format")
   delim = '\t'
 else:
-  print "SGED file is in CSV format"
+  print("SGED file is in CSV format")
   delim = ','
 
 # Start parsing
@@ -65,5 +65,5 @@ df = pandas.merge(df1, df2, how = join_type, left_on = group_col1, right_on = gr
 # Write results:
 df.to_csv(output_file, sep = delim, na_rep = 'NA', index = False)
 
-print "Done."
+print("Done.")
 

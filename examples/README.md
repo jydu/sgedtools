@@ -62,7 +62,7 @@ Structural statistics:
 Compute 3D distances, RSA, and secondary structures:
 
 ```bash
-python ../src/sged-pdb-infos.py \
+python ../src/sged-structure-infos.py \
          --sged=HOG000003295_charge_stats_pvalues_PDB.csv \
          --group=PDB \
          --pdb=3BXY.pdb \
@@ -79,7 +79,7 @@ python ../src/sged-translate-coords.py \
          --index=HOG000003295_PdbIndex.txt \
          --output=HOG000003295_charge_siteInfos_PDB.tsv \
          --name=PDB
-python ../src/sged-pdb-infos.py \
+python ../src/sged-structure-infos.py \
          --sged=HOG000003295_charge_siteInfos_PDB.tsv \
          --group=PDB \
          --pdb=3BXY.pdb \
@@ -113,6 +113,31 @@ python ../src/sged-merge.py \
          --output=HOG000003295_charge_merged.tsv
 
 ```
+
+Get distance between all pairs of sites in a PDB:
+=================================================
+
+```bash
+python3 ../src/sged-structure-list.py \
+        --pdb=3EG4.pdb \
+        --output=3EG4_sites.tsv \
+        --chain=A
+
+python3 ../src/sged-get-all-pairs.py \
+        --sged=3EG4_sites.tsv \
+        --group=PDB \
+        --output=3EG4_sitepairs.tsv
+
+python3 ../src/sged-structure-infos.py \
+        --sged=3EG4_sitepairs.tsv \
+        --group=Group \
+        --pdb=3EG4.pdb \
+        --chain=A \
+        --measures=AlphaDist,DSSPsum \
+        --output=3EG4_sitepairs_infos.tsv
+
+```
+
 
 Conversion from other software:
 ===============================

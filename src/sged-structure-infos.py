@@ -30,29 +30,29 @@ measures = []
 for arg, val in arguments:
   if arg in ("-s", "--sged"):
     sged_file = val
-    print "SGED file: %s" % sged_file
+    print("SGED file: %s" % sged_file)
   elif arg in ("-p", "--pdb"):
     pdb_file = val
-    print "PDB file: %s" % pdb_file
+    print("PDB file: %s" % pdb_file)
   elif arg in ("-o", "--output"):
     output_file = val
-    print "Output info file: %s" % output_file
+    print("Output info file: %s" % output_file)
   elif arg in ("-m", "--measures"):
     measures = val.split(',')
   elif arg in ("-g", "--groups"):
     group_col = val
-    print "PDB coordinates are in column: %s" % group_col
+    print("PDB coordinates are in column: %s" % group_col)
   elif arg in ("-a", "--chain"):
     chain_sel = val
-    print "PDB chain to use: %s" % chain_sel
+    print("PDB chain to use: %s" % chain_sel)
   elif arg in ("-c", "--csv"):
     tabsep = False
 
 if tabsep:
-  print "SGED file is in TSV format"
+  print("SGED file is in TSV format")
   delim = '\t'
 else:
-  print "SGED file is in CSV format"
+  print("SGED file is in CSV format")
   delim = ','
 
 # Parse the PDB and compute 
@@ -235,7 +235,7 @@ with open(sged_file) as csv_file:
                   if distance <= 10:
                     num_contact3[j] = num_contact3[j] + 1
           else:
-            print "ERROR! There is no residue %s in PDB file." % res_sel[j]
+            print("ERROR! There is no residue %s in PDB file." % res_sel[j])
             exit(-2)
         results_contact1[i] = numpy.mean(num_contact1) if len(num_contact1) > 0 else numpy.nan
         results_contact2[i] = numpy.mean(num_contact2) if len(num_contact2) > 0 else numpy.nan
@@ -301,7 +301,7 @@ with open(sged_file) as csv_file:
                  else:
                    rsa[j] = res[3]
               else:
-                print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+                print("ERROR! There is no residue %s in DSSP file." % res_sel[j])
                 exit(-2)
             else:
               motifs[j] = " "
@@ -373,7 +373,7 @@ with open(sged_file) as csv_file:
                  else:
                    rsa[j] = res[3]
               else:
-                print "ERROR! There is no residue %s in DSSP file." % res_sel[j]
+                print("ERROR! There is no residue %s in DSSP file." % res_sel[j])
                 exit(-2)
             else:
                motifs[j] = " "
@@ -425,5 +425,5 @@ with open(sged_file) as csv_file:
   # Write results:
   df.to_csv(output_file, sep = delim, na_rep = 'NA', index = False)
 
-print "Done."
+print("Done.")
 
