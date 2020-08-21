@@ -138,6 +138,31 @@ python3 ../src/sged-structure-infos.py \
 
 ```
 
+Test if groups in one file are contained in groups from another:
+================================================================
+
+First add PDB coordinates to the coevolving groups:
+```bash
+python3 ../src/sged-translate-coords.py \
+         --sged=HOG000003295_charge_significant.tsv \
+         --index=HOG000003295_PdbIndex.txt \
+         --output=HOG000003295_charge_significant_PDB.tsv \
+         --name=PDB
+```
+
+Then test if for all pairs in the 3D structure are in coevolving groups:
+```bash
+python3 ../src/sged-group-test-inclusion.py \
+        --sged1=3EG4_sitepairs_infos.tsv \
+        --group1=PDB \
+        --sged2=HOG000003295_charge_significant_PDB.tsv \
+        --group2=PDB \
+        --output=3EG4_sitepairs_infos_coevolving.tsv \
+        --result=IsCoevolving
+
+```
+
+
 
 Conversion from other software:
 ===============================
