@@ -22,7 +22,6 @@ except getopt.error as err:
 tabsep = True # TSV by default
 group_col1 = "Group"
 group_col2 = "Group"
-measures = []
 join_type = "outer"
 for arg, val in arguments:
   if arg in ("-s", "--sged1"):
