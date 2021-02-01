@@ -35,6 +35,7 @@ for arg, val in arguments:
     print("Output merged file: %s" % output_file)
   elif arg in ("-g", "--group", "--group1"): # Note: if only this arg is passed, group col name is assumed to be identical in both files
     group_col1 = val
+    group_col2 = val
     print("Coordinates are in column: %s" % group_col1)
   elif arg in ("-h", "--group2"):
     group_col2 = val
