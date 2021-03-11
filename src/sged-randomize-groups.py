@@ -16,8 +16,8 @@ import numpy
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:p:o:m:g:a:c"
-full_opt = ["sged=", "pdb=", "output=", "measures=", "groups=", "chain=", "csv"]
+unix_opt = "s:r:p:o:m:g:h:cn:t:b"
+full_opt = ["sged-groups=", "sged-sites=", "pdb=", "output=", "measure=", "groups=", "sites=", "csv", "number-replicates=", "similarity-threshold=", "minimum-observations="]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -26,25 +26,41 @@ except getopt.error as err:
 
 tabsep = True # TSV by default
 group_col = "Group"
-measures = []
+site_col = "Group"
+cond_var = ""
+n_rep = 100
+# Similarity threshold used for conditional variable:
+sim_t = 0.1 # 10% difference: (Nsim - Nobs) / Nobs < 0.1
+min_obs = 5 # Minimum number of matching site. If not enough sites are found for a given position, a warning will be issued. You may try to increase the threshold if too many warnings are produced. 
+
+
 for arg, val in arguments:
-  if arg in ("-s", "--sged"):
-    sged_file = val
-    print "SGED file: %s" % sged_file
+  if arg in ("-s", "--sged-groups"):
+    sged_file_groups = val
+    print "SGED file for groups: %s" % sged_file_groups
+  elif arg in ("-r", "--sged-sites"):
+    sged_file_sites = val
+    print "SGED file for sites: %s" % sged_file_sites
   elif arg in ("-p", "--pdb"):
     pdb_file = val
     print "PDB file: %s" % pdb_file
   elif arg in ("-o", "--output"):
     output_file = val
     print "Output info file: %s" % output_file
-  elif arg in ("-m", "--measures"):
-    measures = val.split(',')
+  elif arg in ("-m", "--measure"):
+    cond_var = val
   elif arg in ("-g", "--groups"):
     group_col = val
-    print "PDB coordinates are in column: %s" % group_col
-  elif arg in ("-a", "--chain"):
-    chain_sel = val
-    print "PDB chain to use: %s" % chain_sel
+    print "Group coordinates are in column: %s" % group_col
+  elif arg in ("-h", "--sites"):
+    site_col = val
+    print "Site coordinates are in column: %s" % site_col
+  elif arg in ("-n", "--number-replicates"):
+    n_rep = int(val)
+  elif arg in ("-t", "--similarity-threshold"):
+    sim_t = float(val)
+  elif arg in ("-b", "--minimum-observations"):
+    min_obs = int(val)
   elif arg in ("-c", "--csv"):
     tabsep = False
 
@@ -56,58 +72,61 @@ else:
   delim = ','
 
 
+print "Number of replicates per group: %i" % n_rep
+if cond_var != "":
+  print "Similarity threshold for conditional variable: %f" % sim_t
 
 # Input:
-sitesPath <- "Myo_sites.csv"
-groupsPath <- "Myo_stats_pvalues.csv"
-
-# Variable to codition over
-cond.var <- "N" #Norm
-
-# Number of randomizations to perform for each group:
-nrep <- 100
-
-# Similarity threshold used for norm:
-sim.t <- 0.1 #10% difference: (Nsim - Nobs) / Nobs < 0.1
-min.obs <- 5 #Minimum number of matching site. If not enough sites are found for a given position, a warning will be issued. You may try to increase the threshold if too many warnings are produced. 
-
+#sitesPath <- "Myo_sites.csv"
+#groupsPath <- "Myo_stats_pvalues.csv"
 # Output path:
-outputPath <- "Myo_random.csv"
+#outputPath <- "Myo_random.csv"
+
+
 
 ###########################################
 
+
 # Read input data:
-sites <- read.table(sitesPath, header = TRUE, stringsAsFactors = FALSE)
-sites$Group <- substr(sites$Group, 2, nchar(sites$Group) - 1)
-row.names(sites) <- sites$Group
-groups <- read.table(groupsPath, header = TRUE, stringsAsFactors = FALSE)
-groupsLst <- strsplit(substr(groups$Group, 2, nchar(groups$Group) - 1), ";")
+with open(sged_file_sites) as csv_file_sites:
+  df_sites = pandas.read_csv(csv_file_sites, sep = delim, dtype = str, keep_default_na = False) #NA in columns ignored
+  groups = df_sites[site_col]
+  groups = [g[1:(len(g)-1)].replace(' ', '') for g in groups]
+  df_sites["Group"] = groups
+  df_sites.set_index("Group", drop = True, inplace = True) # We use the site (as string, not number) as an index
+
+with open(sged_file_groups) as csv_file_groups:
+  df_groups = pandas.read_csv(csv_file_groups, sep = delim, dtype = str, keep_default_na = False)
+  groups = df_groups[group_col]
+  groups_lst = [ g[1:(len(g)-1)].split(";") for g in groups ]
+
+n_groups = len(df_groups.index)
 
 # Now replicate each group:
-x.rep <- numeric(nrow(groups) * nrep)
-l.grp <- list()
-x.grp <- character(nrow(groups) * nrep)
-x.ave <- numeric(nrow(groups) * nrep) #Average of the sampled group
-x.siz <- numeric(nrow(groups) * nrep)
-x.oav <- numeric(nrow(groups) * nrep) #Average the original group
-i <- 1
-for (grp in 1:nrow(groups)) {
-  size <- groups[grp, "Size"]
-  nmin <- groups[grp, "Nmin"]
+x_rep = [ 0 ] * (n_groups * n_rep)
+l_grp = []
+x_grp = [ "" ] * (n_groups * n_rep)
+x_ave = [ 0 ] * (n_groups * n_rep) #Average of the sampled group
+x_siz = [ 0 ] * (n_groups * n_rep)
+x_oav = [ 0 ] * (n_groups * n_rep) #Average the original group
+
+i = 0
+for grp in range(n_groups):
+  size = df_groups[grp, "Size"] # TODO: if the size column is not present, we should generate it
+  nmin = df_groups[grp, cond_var]
   
   # Get all sites with adequate value for each position:
-  gp <- groupsLst[[grp]]
-  if (length(gp) != size) stop("!!! Error in input file, group size does not match number or sites!")
-  gp.vals <- numeric(size)
-  for (j in 1:size) {
-    gp.vals[j] <- sites[gp[j], cond.var]
-  }
+  gp = groups_lst[grp]
+  if len(gp) != size:
+    raise IOError("!!! Error in input file, group size does not match number or sites!")
+  
+  gp_vals = [ df_sites[gp[j], cond_var ] for j in range(size) ]
 
-  x.rep[i:(i + nrep - 1)] <- 1:nrep
-  x.siz[i:(i + nrep - 1)] <- size
-  x.grp[i:(i + nrep - 1)] <- "["
-  x.ave[i:(i + nrep - 1)] <- 0
-  x.oav[i:(i + nrep - 1)] <- mean(gp.vals)
+  x_rep[i:(i + nrep)] = [ x for x in range(1, n_rep + 1) ]
+  x_siz[i:(i + nrep)] = [ size ] * n_rep
+  x_grp[i:(i + nrep)] = [ "[" ] * n_rep
+  x_ave[i:(i + nrep)] = [ 0 ] * n_rep
+  x_oav[i:(i + nrep)] = [ numpy.mean(gp_vals) ] * n_rep
   
   # Loop over each site in the group:
   for (sit in 1:size) {
