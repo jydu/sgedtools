@@ -189,3 +189,20 @@ python3 ../src/sged-translate-coords.py \
 ```
 
 
+
+
+Randomize:
+==========
+
+```bash
+python3 ../src/sged-randomize-groups.py \
+         --sged-groups=HOG000003295_charge_stats_pvalues.csv \
+         --sged-sites=HOG000003295_charge_siteInfos.csv \
+         --measure=N \
+         --number-replicates=10 \
+         --similarity-threshold=0.2 \
+         --output=HOG000003295_charge_random.csv
+```
+
+
+
