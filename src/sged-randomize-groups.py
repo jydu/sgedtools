@@ -121,7 +121,6 @@ for grp in range(n_groups):
     raise IOError("!!! Error in input file, group size does not match number or sites! %i vs.%i" % (len(gp), size))
   
   gp_vals = [ df_sites.loc[gp[j], cond_var] for j in range(size) ]
-  print(gp_vals)
   if all(~numpy.isnan(gp_vals)):
 
     x_rep[i:(i + n_rep)] = [ x for x in range(1, n_rep + 1) ]
