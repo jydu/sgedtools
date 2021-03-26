@@ -89,14 +89,14 @@ if cond_var != "":
 
 # Read input data:
 with open(sged_file_sites) as csv_file_sites:
-  df_sites = pandas.read_csv(csv_file_sites, sep = delim, keep_default_na = False) #NA in columns ignored
+  df_sites = pandas.read_csv(csv_file_sites, sep = delim, na_values = 'NA', keep_default_na = False) #NA in columns ignored
   groups = df_sites[site_col]
   groups = [g[1:(len(g)-1)].replace(' ', '') for g in groups]
   df_sites["Group"] = groups
   df_sites.set_index("Group", drop = False, inplace = True) # We use the site (as string, not number) as an index
 
 with open(sged_file_groups) as csv_file_groups:
-  df_groups = pandas.read_csv(csv_file_groups, sep = delim, keep_default_na = False)
+  df_groups = pandas.read_csv(csv_file_groups, sep = delim, na_values = 'NA', keep_default_na = False)
   groups = df_groups[group_col]
   groups_lst = [ g[1:(len(g)-1)].split(";") for g in groups ]
 
@@ -121,57 +121,59 @@ for grp in range(n_groups):
     raise IOError("!!! Error in input file, group size does not match number or sites! %i vs.%i" % (len(gp), size))
   
   gp_vals = [ df_sites.loc[gp[j], cond_var] for j in range(size) ]
+  print(gp_vals)
+  if all(~numpy.isnan(gp_vals)):
 
-  x_rep[i:(i + n_rep)] = [ x for x in range(1, n_rep + 1) ]
-  x_siz[i:(i + n_rep)] = [ size ] * n_rep
-  x_grp[i:(i + n_rep)] = [ "[" ] * n_rep
-  x_ave[i:(i + n_rep)] = [ 0 ] * n_rep
-  x_oav[i:(i + n_rep)] = [ numpy.mean(gp_vals) ] * n_rep
+    x_rep[i:(i + n_rep)] = [ x for x in range(1, n_rep + 1) ]
+    x_siz[i:(i + n_rep)] = [ size ] * n_rep
+    x_grp[i:(i + n_rep)] = [ "[" ] * n_rep
+    x_ave[i:(i + n_rep)] = [ 0 ] * n_rep
+    x_oav[i:(i + n_rep)] = [ numpy.mean(gp_vals) ] * n_rep
   
-  # Loop over each site in the group:
-  for sit in range(size):
-    # Get all sites with similar rate (or any other conditional variable):
-    t = [ abs(v - gp_vals[sit]) / gp_vals[sit] for v in df_sites[cond_var] ]
-    cond_sites = df_sites[ [x <= sim_t for x in t] ]
+    # Loop over each site in the group:
+    for sit in range(size):
+      # Get all sites with similar rate (or any other conditional variable):
+      t = [ abs(v - gp_vals[sit]) / gp_vals[sit] for v in df_sites[cond_var] ]
+      cond_sites = df_sites[ [x <= sim_t for x in t] ]
     
-    # Loop over each simulation replicate:
-    for sim in range(n_rep):
-      # Remove sites already present in the group
-      if i + sim < len(l_grp): # test if element already exists in list
-        tmp = cond_sites[ ~cond_sites[site_col].isin(l_grp[i + sim]) ]
-      else:
-        tmp = cond_sites
+      # Loop over each simulation replicate:
+      for sim in range(n_rep):
+        # Remove sites already present in the group
+        if i + sim < len(l_grp): # test if element already exists in list
+          tmp = cond_sites[ ~cond_sites[site_col].isin(l_grp[i + sim]) ]
+        else:
+          tmp = cond_sites
 
-      # Sampling correction:
-      tmpl = tmp[tmp[cond_var] < gp_vals[sit]]
-      tmpg = tmp[tmp[cond_var] > gp_vals[sit]]
-      tmpe = tmp[tmp[cond_var] == gp_vals[sit]]
-      n = min(len(tmpl.index), len(tmpg.index))
-      n = max(n, min_obs) # we add min_obs there to avoid getting no replicate site when we have extreme values for the candidate site.
+        # Sampling correction:
+        tmpl = tmp[tmp[cond_var] < gp_vals[sit]]
+        tmpg = tmp[tmp[cond_var] > gp_vals[sit]]
+        tmpe = tmp[tmp[cond_var] == gp_vals[sit]]
+        n = min(len(tmpl.index), len(tmpg.index))
+        n = max(n, min_obs) # we add min_obs there to avoid getting no replicate site when we have extreme values for the candidate site.
       
-      cat_list = [ tmpl.sample(min(n, len(tmpl.index))),
-                   tmpe,
-                   tmpg.sample(min(n, len(tmpg.index)))
-                 ]
-      tmp2 = pandas.concat(cat_list)
-      if len(tmp2.index) == 0:
-        warnings.warn("No more similar site available for candidate site %i in group %i replicate %i" % (sit, grp, sim))
-        x_grp[i + sim] = "%s%sNA" % (x_grp[i + sim], ifelse_fun(x_grp[i + sim] == "[", "", ";"))
-        x_ave[i + sim] = numpy.nan
-      else:
-        if len(tmp2.index) < min_obs :
-          warnings.warn("Minimum site frequency not matched for candidate site %i in group %i replicate %i" % (sit, grp, sim))
+        cat_list = [ tmpl.sample(min(n, len(tmpl.index))),
+                     tmpe,
+                     tmpg.sample(min(n, len(tmpg.index)))
+                   ]
+        tmp2 = pandas.concat(cat_list)
+        if len(tmp2.index) == 0:
+          warnings.warn("No more similar site available for candidate site %i in group %i replicate %i" % (sit, grp, sim))
+          x_grp[i + sim] = "%s%sNA" % (x_grp[i + sim], ifelse_fun(x_grp[i + sim] == "[", "", ";"))
+          x_ave[i + sim] = numpy.nan
+        else:
+          if len(tmp2.index) < min_obs :
+            warnings.warn("Minimum site frequency not matched for candidate site %i in group %i replicate %i" % (sit, grp, sim))
 
-        # Now sample sites:
-        x = tmp2.sample(1)
-        l_grp[i + sim] = l_grp[i + sim] + x["Group"].to_numpy().tolist()
+          # Now sample sites:
+          x = tmp2.sample(1)
+          l_grp[i + sim] = l_grp[i + sim] + x["Group"].to_numpy().tolist()
     
-        x_grp[i + sim] = "%s%s%i" % (x_grp[i + sim], ifelse_fun(x_grp[i + sim] == "[", "", ";"), x["Group"])
-        x_ave[i + sim] = x_ave[i + sim] + x[cond_var]
+          x_grp[i + sim] = "%s%s%i" % (x_grp[i + sim], ifelse_fun(x_grp[i + sim] == "[", "", ";"), x["Group"])
+          x_ave[i + sim] = x_ave[i + sim] + x[cond_var]
   
-  for j in range(i, i + n_rep):
-          x_grp[j] = x_grp[j] + "]"
-  i = i + n_rep
+    for j in range(i, i + n_rep):
+            x_grp[j] = x_grp[j] + "]"
+    i = i + n_rep
 
 x_ave = x_ave / x_siz
 results = { 'Replicate': x_rep, 'Group': x_grp, 'Size': x_siz, 'RandMean': x_ave, 'OrigMean': x_oav }
