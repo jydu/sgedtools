@@ -13,14 +13,15 @@ from Bio import SeqIO
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "a:r:o:"
-full_opt = ["alignment=", "reference=", "output="]
+unix_opt = "a:r:o:f:"
+full_opt = ["alignment=", "reference=", "output=", "format="]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
   print (str(err))
   sys.exit(2)
 
+aln_format = "ig"
 for arg, val in arguments:
   if arg in ("-a", "--alignment"):
     aln_file = val
@@ -28,6 +29,9 @@ for arg, val in arguments:
   elif arg in ("-r", "--reference"):
     ref_seq = val
     print("Output reference sequence: %s" % ref_seq)
+  elif arg in ("-f", "--format"):
+    aln_format = val
+    print("Input alignment format: %s" % aln_format)
   elif arg in ("-o", "--output"):
     output_file = val
     print("Output index file: %s" % output_file)
@@ -37,7 +41,7 @@ print("Parsing structure(s)...")
 
 # We retrieve the original sequence from the alignment:
 with open(aln_file, "r") as handle:
-    aln_seqs = SeqIO.to_dict(SeqIO.parse(handle, "ig")) #TODO: implement several formats 
+    aln_seqs = SeqIO.to_dict(SeqIO.parse(handle, aln_format))
 aln_seq = aln_seqs[ref_seq]
 
 print("Build the index...")
