@@ -65,6 +65,9 @@ for arg, val in arguments:
     print("Site coordinates are in column: %s" % site_col)
   elif arg in ("-n", "--number-replicates"):
     n_rep = int(val)
+    if n_rep > 4294967295:
+      print("Number of replicates too high. Consider using uint64 instead of uint32 if needed.")
+      sys.exit(2)
   elif arg in ("-t", "--similarity-threshold"):
     sim_t = float(val)
   elif arg in ("-b", "--minimum-observations"):
@@ -103,11 +106,11 @@ with open(sged_file_groups) as csv_file_groups:
 n_groups = len(df_groups.index)
 
 # Now replicate each group:
-x_rep = numpy.zeros(n_groups * n_rep, dtype = numpy.int8)
+x_rep = numpy.zeros(n_groups * n_rep, dtype = numpy.uint32)
 l_grp = [ [] ] * (n_groups * n_rep)
 x_grp = [ "" ] * (n_groups * n_rep)
 x_ave = numpy.zeros(n_groups * n_rep) #Average of the sampled group
-x_siz = numpy.zeros(n_groups * n_rep, dtype =numpy.int8)
+x_siz = numpy.zeros(n_groups * n_rep, dtype = numpy.uint32)
 x_oav = numpy.zeros(n_groups * n_rep) #Average the original group
 
 i = 0
