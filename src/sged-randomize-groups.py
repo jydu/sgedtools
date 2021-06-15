@@ -116,7 +116,7 @@ x_oav = numpy.zeros(n_groups * n_rep) #Average the original group
 i = 0
 for grp in range(n_groups):
   size = int(df_groups.loc[grp, "Size"]) # TODO: if the size column is not present, we should generate it
-  print("Simulating for group %i with size%i\n" % (grp, size))
+  print("Simulating for group %i with size %i\n" % (grp, size))
   
   # Get all sites with adequate value for each position:
   gp = groups_lst[grp]
