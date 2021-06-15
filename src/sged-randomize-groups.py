@@ -124,9 +124,9 @@ for grp in range(n_groups):
     raise IOError("!!! Error in input file, group size does not match number or sites! %i vs.%i" % (len(gp), size))
   
   gp_vals = [ df_sites.loc[gp[j], cond_var] for j in range(size) ]
+  x_rep[i:(i + n_rep)] = [ x for x in range(1, n_rep + 1) ]
   if all(~numpy.isnan(gp_vals)):
 
-    x_rep[i:(i + n_rep)] = [ x for x in range(1, n_rep + 1) ]
     x_siz[i:(i + n_rep)] = [ size ] * n_rep
     x_grp[i:(i + n_rep)] = [ "[" ] * n_rep
     x_ave[i:(i + n_rep)] = [ 0 ] * n_rep
@@ -174,8 +174,9 @@ for grp in range(n_groups):
           x_ave[i + sim] = x_ave[i + sim] + x[cond_var]
   
     for j in range(i, i + n_rep):
-            x_grp[j] = x_grp[j] + "]"
-    i = i + n_rep
+      x_grp[j] = x_grp[j] + "]"
+
+  i = i + n_rep
 
 x_ave = x_ave / x_siz
 results = { 'Replicate': x_rep, 'Group': x_grp, 'Size': x_siz, 'RandMean': x_ave, 'OrigMean': x_oav }
