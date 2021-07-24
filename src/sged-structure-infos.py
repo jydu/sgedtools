@@ -39,8 +39,8 @@ for arg, val in arguments:
     print("PDB file: %s" % pdb_file)
   elif arg in ("-f", "--pdb-format"):
     pdb_format = val
-    if val != "PDB" and val != "mmCIF":
-      print("Structure format should be either PDB or mmCIF")
+    if val != "PDB" and val != "mmCIF" and val[0:7] != "remote:":
+      print("Structure format should be either PDB or mmCIF, or remote:PDB, remote:mmCIF, etc. if you would like to retrieve the file from RCSB")
       exit(-1)
     print("PDB format: %s" % pdb_format)
   elif arg in ("-o", "--output"):
@@ -65,10 +65,20 @@ else:
   delim = ','
 
 # Parse the PDB and compute 
-if pdb_format == "PDB":
+if pdb_format.startswith("remote:") :
+  remote_format = pdb_format[7:]
+  pdb_server = PDBList(server='ftp://ftp.wwpdb.org', pdb = None, obsolete_pdb = False, verbose = True)
+  pdb_file = pdb_server.retrieve_pdb_file(pdb_code = pdb_file, obsolete = False, pdir = ".", file_format = remote_format, overwrite = True)
+  pdb_format = remote_format
+
+if pdb_format.upper() == "PDB" :
   parser = PDBParser()
-else:
+elif pdb_format.upper() == "MMCIF" :
   parser = MMCIFParser()
+else :
+  print("ERROR!!! Unsupported structure format: %s" % pdb_format)
+  exit(-1)
+
 structure = parser.get_structure('STRUCT', pdb_file)
 
 
@@ -446,7 +456,7 @@ with open(sged_file) as csv_file:
       """
       Provide a list of secondary structure types and labels. Only works with mmCIF input files.
       """
-      if pdb_format != "mmCIF":
+      if pdb_format.upper() != "MMCIF":
         print("SecondaryStructureLabel only works with mmCIF input files.")
         exit(-1)
       
