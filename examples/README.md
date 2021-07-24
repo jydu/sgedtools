@@ -24,7 +24,7 @@ Create a PDB index:
 
 We compare all chains in the three available structures to find the best match in the alignment:
 ```bash
-python3 ../src/sged-create-structure-index.py \
+python3.9 ../src/sged-create-structure-index.py \
          --pdb=3BXY.pdb \
          --pdb=3EG4.pdb \
          --pdb=3GOS.pdb \
@@ -33,7 +33,7 @@ python3 ../src/sged-create-structure-index.py \
 ```
 which does the same as
 ```bash
-python3 ../src/sged-create-structure-index.py \
+python3.9 ../src/sged-create-structure-index.py \
          --pdb=*.pdb \
          --alignment=HOG000003295_bppalnscore.mase \
          --output=HOG000003295_PdbIndex.txt
@@ -43,13 +43,13 @@ Translate according to PDB:
 ===========================
 
 ```bash
-python3 ../src/sged-translate-coords.py \
+python3.9 ../src/sged-translate-coords.py \
          --sged=HOG000003295_charge_stats_pvalues.csv \
          --index=HOG000003295_PdbIndex.txt \
          --output=HOG000003295_charge_stats_pvalues_PDB.csv \
          --name=PDB
 
-python3 ../src/sged-translate-coords.py \
+python3.9 ../src/sged-translate-coords.py \
          --sged=HOG000003295_sites.tsv \
          --index=HOG000003295_PdbIndex.txt \
          --output=HOG000003295_sites_PDB.tsv \
@@ -62,15 +62,27 @@ Structural statistics:
 Compute 3D distances, RSA, and secondary structures:
 
 ```bash
-python ../src/sged-structure-infos.py \
+python3.9 ../src/sged-structure-infos.py \
          --sged=HOG000003295_charge_stats_pvalues_PDB.csv \
          --group=PDB \
-         --pdb=3BXY.pdb \
+         --pdb=3EG4.pdb \
          --chain=A \
          --measures=AlphaDist,DSSPsum \
          --output=HOG000003295_charge_stats_pvalues_PDB_infos.tsv
-
 ```
+Also works with mmCIF files:
+```bash
+python3.9 ../src/sged-structure-infos.py \
+         --sged=HOG000003295_charge_stats_pvalues_PDB.csv \
+         --group=PDB \
+         --pdb=3eg4.cif \
+         --pdb-format=mmCIF \
+         --chain=A \
+         --measures=AlphaDist,DSSPsum,SecondaryStructureLabel \
+         --output=HOG000003295_charge_stats_pvalues_PDB_infos2.tsv
+```
+
+
 
 RSA and structure per site:
 ```bash

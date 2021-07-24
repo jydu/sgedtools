@@ -11,19 +11,22 @@ import numpy
 import scipy.cluster.hierarchy
 from Bio.PDB import *
 from Bio.PDB.DSSP import DSSP
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from Bio.SeqUtils import *
+from Bio.Data import SCOPData
 
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:p:o:m:g:a:c"
-full_opt = ["sged=", "pdb=", "output=", "measures=", "groups=", "chain=", "csv"]
+unix_opt = "s:p:f:o:m:g:a:c"
+full_opt = ["sged=", "pdb=", "pdb-format=", "output=", "measures=", "groups=", "chain=", "csv"]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
   print (str(err))
   sys.exit(2)
 
+pdb_format = "PDB"
 tabsep = True # TSV by default
 group_col = "Group"
 measures = []
@@ -34,6 +37,12 @@ for arg, val in arguments:
   elif arg in ("-p", "--pdb"):
     pdb_file = val
     print("PDB file: %s" % pdb_file)
+  elif arg in ("-f", "--pdb-format"):
+    pdb_format = val
+    if val != "PDB" and val != "mmCIF":
+      print("Structure format should be either PDB or mmCIF")
+      exit(-1)
+    print("PDB format: %s" % pdb_format)
   elif arg in ("-o", "--output"):
     output_file = val
     print("Output info file: %s" % output_file)
@@ -56,8 +65,12 @@ else:
   delim = ','
 
 # Parse the PDB and compute 
-parser = PDBParser()
+if pdb_format == "PDB":
+  parser = PDBParser()
+else:
+  parser = MMCIFParser()
 structure = parser.get_structure('STRUCT', pdb_file)
+
 
 if (len(structure) > 1):
   print("Warning, %s models in PDB file %s. Using the first one." % (len(structure), pdb_file))
@@ -71,6 +84,12 @@ class ModelSelect(Select):
       return 1
     else:
       return 0
+
+def res_to_str(id) :
+  s = str(id[1])
+  if id[2] != ' ':
+    s = s + id[2]
+  return s
 
 # Start parsing
 with open(sged_file) as csv_file:
@@ -420,6 +439,120 @@ with open(sged_file) as csv_file:
       df[ "CalphaDepth"] = results_ca_depth
 
 
+
+
+    elif measure == "SecondaryStructureLabel":
+
+      """
+      Provide a list of secondary structure types and labels. Only works with mmCIF input files.
+      """
+      if pdb_format != "mmCIF":
+        print("SecondaryStructureLabel only works with mmCIF input files.")
+        exit(-1)
+      
+      # Load dictionary:
+      mmcif_dict = MMCIF2Dict(pdb_file)
+      
+      # Beta-sheets
+      sheet_id = mmcif_dict["_struct_sheet_range.sheet_id"]
+      range_id = mmcif_dict["_struct_sheet_range.id"]
+      sta_res = mmcif_dict["_struct_sheet_range.beg_auth_comp_id"]
+      sta_cha = mmcif_dict["_struct_sheet_range.beg_auth_asym_id"]
+      sta_pos = mmcif_dict["_struct_sheet_range.beg_auth_seq_id"]
+      end_res = mmcif_dict["_struct_sheet_range.end_auth_comp_id"]
+      end_cha = mmcif_dict["_struct_sheet_range.end_auth_asym_id"]
+      end_pos = mmcif_dict["_struct_sheet_range.end_auth_seq_id"]
+
+      # Create index. First do some checks:
+      nb_elts = len(sta_res)
+      if len(sta_cha) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_sheet_range.beg_auth_asym_id elements.")
+        exit(-1)
+      if len(sta_pos) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_sheet_range.beg_auth_seq_id elements.")
+        exit(-1)
+      if len(end_res) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_sheet_range.end_auth_comp_id elements.")
+        exit(-1)
+      if len(end_cha) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_sheet_range.end_auth_asym_id elements.")
+        exit(-1)
+      if len(end_pos) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_sheet_range.end_auth_seq_id elements.")
+        exit(-1)
+
+      struct_index = dict()
+      for i in range(nb_elts):
+        if sta_cha[i] != end_cha[i]:
+          print("ERROR! Chain attribute of start and end positions should be identical in beta-sheet element %i." % i)
+          exit(-1)
+        if sta_cha[i] == chain_sel:
+          s = [chain[x] for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
+          for residue in s:
+            res = residue.get_resname().upper()
+            letter = SCOPData.protein_letters_3to1[res]
+            if not letter in Polypeptide.d1_to_index:
+              letter = 'X'
+            struct_index["%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))] = "%s-%s" % (sheet_id[i], range_id[i])
+      
+
+      # Helices
+      helix_id = mmcif_dict["_struct_conf.conf_type_id"] 
+      sconf_id = mmcif_dict["_struct_conf.id"] 
+      sta_res = mmcif_dict["_struct_conf.beg_auth_comp_id"]
+      sta_cha = mmcif_dict["_struct_conf.beg_auth_asym_id"] 
+      sta_pos = mmcif_dict["_struct_conf.beg_auth_seq_id"] 
+      end_res = mmcif_dict["_struct_conf.end_auth_comp_id"] 
+      end_cha = mmcif_dict["_struct_conf.end_auth_asym_id"] 
+      end_pos = mmcif_dict["_struct_conf.end_auth_seq_id"] 
+
+      # Some checks:
+      nb_elts = len(sta_res)
+      if len(sta_cha) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_conf.beg_auth_asym_id elements.")
+        exit(-1)
+      if len(sta_pos) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_conf.beg_auth_seq_id elements.")
+        exit(-1)
+      if len(end_res) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_conf.end_auth_comp_id elements.")
+        exit(-1)
+      if len(end_cha) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_conf.end_auth_asym_id elements.")
+        exit(-1)
+      if len(end_pos) != nb_elts:
+        print("ERROR! Invalid mmCIF file, wrong number of _struct_conf.end_auth_seq_id elements.")
+        exit(-1)
+
+      for i in range(nb_elts):
+        if sta_cha[i] != end_cha[i]:
+          print("ERROR! Chain attribute of start and end positions should be identical in helix element %i." % i)
+          exit(-1)
+        if sta_cha[i] == chain_sel:
+          s = [chain[x] for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
+          for residue in s:
+            res = residue.get_resname().upper()
+            letter = SCOPData.protein_letters_3to1[res]
+            if not letter in Polypeptide.d1_to_index:
+              letter = 'X'
+            struct_index["%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))] = "%s-%s" % (helix_id[i], sconf_id[i])
+
+
+      # Add labels to groups:
+      results_labels = [numpy.nan for x in groups]
+      for i, g in enumerate(groups):
+        tmp = g[1:(len(g)-1)]
+        tmp = tmp.replace(' ', '')
+        res_sel = tmp.split(";")
+        group_labels = ["NA" for x in res_sel]
+        for j, site in enumerate(res_sel):
+          if site in struct_index:
+            group_labels[j] = struct_index[site]
+        results_labels[i] = "[%s]" % (";".join(group_labels))
+
+      df["SecondaryStructureLabels"] = results_labels
+
+      # TODO: for all pairs of labelled residues, count how many are within the same one. Distinguish sheets, strands and helices?
 
 
   # Write results:
