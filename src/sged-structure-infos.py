@@ -68,7 +68,7 @@ else:
 if pdb_format.startswith("remote:") :
   remote_format = pdb_format[7:]
   pdb_server = PDBList(server='ftp://ftp.wwpdb.org', pdb = None, obsolete_pdb = False, verbose = True)
-  pdb_file = pdb_server.retrieve_pdb_file(pdb_code = pdb_file, obsolete = False, pdir = ".", file_format = remote_format, overwrite = True)
+  pdb_file = pdb_server.retrieve_pdb_file(pdb_code = pdb_file, obsolete = False, pdir = ".", file_format = remote_format, overwrite = False)
   pdb_format = remote_format
 
 if pdb_format.upper() == "PDB" :

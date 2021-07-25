@@ -76,7 +76,7 @@ python3.9 ../src/sged-structure-infos.py \
          --sged=HOG000003295_charge_stats_pvalues_PDB.csv \
          --group=PDB \
          --pdb=3eg4.cif \
-         --pdb-format=mmCIF \
+         --pdb-format=mmCif \
          --chain=A \
          --measures=AlphaDist,DSSPsum,SecondaryStructureLabel \
          --output=HOG000003295_charge_stats_pvalues_PDB_infos2.tsv
