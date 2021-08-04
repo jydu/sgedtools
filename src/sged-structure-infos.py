@@ -497,7 +497,8 @@ with open(sged_file) as csv_file:
           print("ERROR! Chain attribute of start and end positions should be identical in beta-sheet element %i." % i)
           exit(-1)
         if sta_cha[i] == chain_sel:
-          s = [chain[x] for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
+          s = [chain[x] if x in chain else None for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
+          s = list(filter(None, s))
           for residue in s:
             res = residue.get_resname().upper()
             letter = SCOPData.protein_letters_3to1[res]
@@ -539,7 +540,8 @@ with open(sged_file) as csv_file:
           print("ERROR! Chain attribute of start and end positions should be identical in helix element %i." % i)
           exit(-1)
         if sta_cha[i] == chain_sel:
-          s = [chain[x] for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
+          s = [chain[x] if x in chain else None for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
+          s = list(filter(None, s))
           for residue in s:
             res = residue.get_resname().upper()
             letter = SCOPData.protein_letters_3to1[res]
