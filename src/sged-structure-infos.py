@@ -495,9 +495,8 @@ with open(sged_file) as csv_file:
 
         for i in range(nb_elts):
           if sta_cha[i] != end_cha[i]:
-            print("ERROR! Chain attribute of start and end positions should be identical in beta-sheet element %i." % i)
-            exit(-1)
-          if sta_cha[i] == chain_sel:
+            print("ERROR! Chain attribute of start and end positions should be identical in beta-sheet element %i. This strand annotation will be ignored." % i)
+          elif sta_cha[i] == chain_sel:
             s = [chain[x] if x in chain else None for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
             s = list(filter(None, s))
             for residue in s:
@@ -539,9 +538,8 @@ with open(sged_file) as csv_file:
 
         for i in range(nb_elts):
           if sta_cha[i] != end_cha[i]:
-            print("ERROR! Chain attribute of start and end positions should be identical in helix element %i." % i)
-            exit(-1)
-          if sta_cha[i] == chain_sel:
+            print("ERROR! Chain attribute of start and end positions should be identical in helix element %i. This helix annotation is ignored." % i)
+          elif sta_cha[i] == chain_sel:
             s = [chain[x] if x in chain else None for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)]
             s = list(filter(None, s))
             for residue in s:
@@ -565,8 +563,6 @@ with open(sged_file) as csv_file:
         results_labels[i] = "[%s]" % (";".join(group_labels))
 
       df["SecondaryStructureLabels"] = results_labels
-
-      # TODO: for all pairs of labelled residues, count how many are within the same one. Distinguish sheets, strands and helices?
 
 
   # Write results:
