@@ -99,7 +99,7 @@ python ../src/sged-structure-infos.py \
          --measures=DSSP \
          --output=HOG000003295_charge_siteInfos_PDB_infos.tsv
 
-``
+```
 
 Merging files:
 ==============
