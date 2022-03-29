@@ -29,6 +29,7 @@ python3.9 ../src/sged-create-structure-index.py \
          --pdb=3EG4.pdb \
          --pdb=3GOS.pdb \
          --alignment=HOG000003295_bppalnscore.mase \
+         --alignment-format=ig \
          --output=HOG000003295_PdbIndex.txt
 ```
 which does the same as
@@ -36,6 +37,7 @@ which does the same as
 python3.9 ../src/sged-create-structure-index.py \
          --pdb=*.pdb \
          --alignment=HOG000003295_bppalnscore.mase \
+         --alignment-format=ig \
          --output=HOG000003295_PdbIndex.txt
 ```
 
@@ -187,7 +189,7 @@ python3 ../src/sged-disembl2sged.py -d HOG000003295_scores.tsv -o HOG000003295_s
 Convert to alignment positions. First create an index:
 
 ```bash
-python3 ../src/sged-create-sequence-index.py -a HOG000003295_bppalnscore.mase -r seq451 -o HOG000003295_SeqIndex.txt
+python3 ../src/sged-create-sequence-index.py -a HOG000003295_bppalnscore.mase -g ig -r seq451 -o HOG000003295_SeqIndex.txt
 ```
 (seq451 was the sequence used to predict intrinsically disordered regions)
 

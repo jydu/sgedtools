@@ -14,13 +14,12 @@ from Bio import pairwise2
 from Bio.Data import SCOPData
 from Bio.SubsMat import MatrixInfo as matlist
 blosum62 = matlist.blosum62
-parser = PDBParser()
 
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:a:o:x"
-full_opt = ["pdb=", "alignment=", "output=", "exclude-incomplete"]
+unix_opt = "p:f:a:g:o:x"
+full_opt = ["pdb=", "pdb-format=", "alignment=", "alignment-format=", "output=", "exclude-incomplete"]
 try:
   arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -28,27 +27,67 @@ except getopt.error as err:
   sys.exit(2)
 
 pdb_files = []
+pdb_format = "PDB"
 exclude_incomplete = False
+aln_file = ""
+aln_format = "fasta"
 for arg, val in arguments:
   if arg in ("-p", "--pdb"):
     pdb_files = pdb_files + glob.glob(val)
     print("PDB file: %s" % val)
+  elif arg in ("-f", "--pdb-format"):
+    pdb_format = val
+    if val != "PDB" and val != "mmCIF" and val[0:7] != "remote:":
+      print("Structure format should be either PDB or mmCIF, or remote:PDB, remote:mmCIF, etc. if you would like to retrieve the file from RCSB")
+      exit(-1)
+    print("PDB format: %s" % pdb_format)
   elif arg in ("-a", "--alignment"):
     aln_file = val
     print("Alignment file: %s" % aln_file)
+  elif arg in ("-g", "--alignment-format"):
+    aln_format = val
+    print("Alignment format: %s" % aln_format)    
   elif arg in ("-o", "--output"):
     output_file = val
     print("Output index file: %s" % output_file)
   elif arg in ("-x", "--exclude-incomplete"):
     exclude_incomplete = True
-#TODO: check that all args are provided, that file exist, and eventually allow for various alignment formats.
+
+# Check options:
+
+if len(pdb_files) == 0:
+    print("At least one structure file should be provided.")
+    exit(-1)
+
+if aln_file == "":
+    print("An alignment file should be provided.")
+    exit(-1)
+
 
 print("Parsing structure(s)...")
+
+if pdb_format.startswith("remote:") :
+  remote_format = pdb_format[7:]
+  pdb_server = PDBList(server='ftp://ftp.wwpdb.org', pdb = None, obsolete_pdb = False, verbose = True)
+  pdb_format = remote_format
+
+if pdb_format.upper() == "PDB" :
+  parser = PDBParser()
+elif pdb_format.upper() == "MMCIF" :
+  parser = MMCIFParser()
+else :
+  print("ERROR!!! Unsupported structure format: %s" % pdb_format)
+  exit(-1)
+
 
 pdb_seqs = dict()
 
 prop_incomplete = dict()
 for pdb_file in pdb_files:
+  if "pdb_server" in locals():
+    print("Retrieving structure from remote server...")
+    pdb_file = pdb_server.retrieve_pdb_file(pdb_code = pdb_file, obsolete = False, pdir = ".", file_format = pdb_format, overwrite = False)
+  
   print("Parsing PDB file %s..." % pdb_file)
   structure = parser.get_structure('STRUCT', pdb_file)
 
@@ -95,7 +134,7 @@ print("Compare structure(s) and alignment...")
 
 # We retrieve the original sequence from the alignment:
 with open(aln_file, "r") as handle:
-  aln_seqs = SeqIO.to_dict(SeqIO.parse(handle, "ig")) 
+  aln_seqs = SeqIO.to_dict(SeqIO.parse(handle, aln_format)) 
 
 # Align each PDB sequence with each alignment sequence and get the best score
 best_pdb = ""
