@@ -1,5 +1,5 @@
 # sgedtools
-Tools to handle files in the SGED (Site Group Estensible Data) format
+Tools to handle files in the SGED (Site Group Extensible Data) format
 
 The SGED format allows to annotate (group of) sites in a sequence alignment.
 It is essentially a tabular format (TSV or CSV), with one group per line.
