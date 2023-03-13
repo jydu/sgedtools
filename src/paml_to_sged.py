@@ -34,24 +34,6 @@ if method == "bayesian":
     start_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] + 3
     end_row = [i for i, line in enumerate(contents) if 'The grid' in line][0] - 2
 
-    lines = contents[start_row:end_row]
-
-    #Extract the information
-    positive_sites = []
-    for line in lines:
-        site_info = line.split()
-        positive_sites.append(site_info)
-
-    #convert it to the data frame and add square brackets
-    df = pd.DataFrame(positive_sites, columns=['position', 'amino_acid', 'probability'])
-    df.insert(loc=0, column='Groups', value='[' + df['position'] + ']')
-    df.drop(['position'], axis=1, inplace=True)
-    print(df)
-
-    # converting to the csv file
-    df.to_csv(output_file, index=False)
-
-
 elif method == "naive":
     # read the paml result file
     with open(paml_file, 'r') as f:
@@ -59,23 +41,23 @@ elif method == "naive":
     start_row = [i for i, line in enumerate(contents) if 'Naive Empirical Bayes (NEB)' in line][0] + 3
     end_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] - 2
 
-    lines = contents[start_row:end_row]
-
-    # Extract the information
-    positive_sites = []
-    for line in lines:
-        site_info = line.split()
-        positive_sites.append(site_info)
-
-    # convert it to the data frame and add square brackets
-    df = pd.DataFrame(positive_sites, columns=['position', 'amino_acid', 'probability'])
-    df.insert(loc=0, column='Groups', value='[' + df['position'] + ']')
-    df.drop(['position'], axis=1, inplace=True)
-    print(df)
-
-    # converting to the csv file
-    df.to_csv(output_file, index=False)
-
 else:
-    print("Error: Method is not valid.")
+    print("Error: Method not specified.")
     sys.exit(2)
+
+lines = contents[start_row:end_row]
+
+# Extract the information
+positive_sites = []
+for line in lines:
+    site_info = line.split()
+    positive_sites.append(site_info)
+
+# convert it to the data frame and add square brackets
+df = pd.DataFrame(positive_sites, columns=['position', 'amino_acid', 'probability'])
+df.insert(loc=0, column='Groups', value='[' + df['position'] + ']')
+df.drop(['position'], axis=1, inplace=True)
+print(df)
+
+# converting to the csv file
+df.to_csv(output_file, index=False)
