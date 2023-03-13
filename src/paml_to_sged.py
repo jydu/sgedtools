@@ -42,7 +42,7 @@ elif method == "naive":
     end_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] - 2
 
 else:
-    print("Error: Method not specified.")
+    print("Error: Method is not valid.")
     sys.exit(2)
 
 lines = contents[start_row:end_row]
