@@ -24,20 +24,20 @@ for arg, val in arguments:
     elif arg in ("-m", "--method"):
         method = val.lower()
         print("Method: %s" % method)
-
-
+        
+#read the paml result file
+with open(paml_file, 'r') as f:
+    contents = f.readlines()
+    
 if method == "bayesian":
-    #read the paml result file
-    with open(paml_file, 'r') as f:
-        contents = f.readlines()
     #find the positive selected sites under the BEB
+    
     start_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] + 3
     end_row = [i for i, line in enumerate(contents) if 'The grid' in line][0] - 2
 
 elif method == "naive":
-    # read the paml result file
-    with open(paml_file, 'r') as f:
-        contents = f.readlines()
+    #find the positive selected sites under the NEB
+    
     start_row = [i for i, line in enumerate(contents) if 'Naive Empirical Bayes (NEB)' in line][0] + 3
     end_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] - 2
 
