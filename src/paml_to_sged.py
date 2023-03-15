@@ -55,7 +55,7 @@ for line in lines:
 
 # convert it to the data frame and add square brackets
 df = pd.DataFrame(positive_sites, columns=['position', 'amino_acid', 'probability'])
-df.insert(loc=0, column='Groups', value='[' + df['position'] + ']')
+df.insert(loc=0, column='Group', value='[' + df['position'] + ']')
 df.drop(['position'], axis=1, inplace=True)
 print(df)
 
