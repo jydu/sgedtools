@@ -32,7 +32,7 @@ with open(paml_file, 'r') as f:
 if method == "bayesian":
     #find the positive selected sites under the BEB
     
-    start_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] + 3
+    start_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] + 2
     end_row = [i for i, line in enumerate(contents) if 'The grid' in line][0] - 2
 
 elif method == "naive":
