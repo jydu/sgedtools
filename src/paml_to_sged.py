@@ -32,7 +32,7 @@ with open(paml_file, 'r') as f:
 if method == "bayesian":
     #find the positive selected sites under the BEB
     
-    start_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] + 3
+    start_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] + 2
     end_row = [i for i, line in enumerate(contents) if 'The grid' in line][0] - 2
 
 elif method == "naive":
@@ -55,7 +55,7 @@ for line in lines:
 
 # convert it to the data frame and add square brackets
 df = pd.DataFrame(positive_sites, columns=['position', 'amino_acid', 'probability'])
-df.insert(loc=0, column='Groups', value='[' + df['position'] + ']')
+df.insert(loc=0, column='Group', value='[' + df['position'] + ']')
 df.drop(['position'], axis=1, inplace=True)
 print(df)
 
