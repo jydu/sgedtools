@@ -39,7 +39,7 @@ elif method == "naive":
     #find the positive selected sites under the NEB
     
     start_row = [i for i, line in enumerate(contents) if 'Naive Empirical Bayes (NEB)' in line][0] + 3
-    end_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] - 2
+    end_row = [i for i, line in enumerate(contents) if 'Bayes Empirical Bayes (BEB)' in line][0] - 1
 
 else:
     print("Error: Method is not valid.")
