@@ -11,7 +11,7 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:o:i:n:rc"
+unix_opt = "s:o:i:n:r:c"
 full_opt = ["sged=", "output=", "index=", "name=", "reverse", "csv"]
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
