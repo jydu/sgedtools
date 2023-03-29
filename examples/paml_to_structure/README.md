@@ -71,7 +71,7 @@ which is "colobus_Cgu&Can", to find the best-matched protein structure, or in ot
 protein structure to our sequence from the data bank. 
 The nucleic acid sequence should be translated into amino acid sequence. In this example, the sequence 
 of the foreground branch was inserted to the MEGA7 (MEGA7: Molecular Evolutionary Genetics Analysis version 7.0 for bigger datasets) [(Kumar, Stecher, and Tamura 2016)][5] 
-from the text file, translated into the protein sequence, and exported as fasta format.
+from a text file, translated into the protein sequence, and exported as fasta format.
 
 ```bash
 python3 sged-create-structure-index.py \
