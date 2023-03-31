@@ -9,22 +9,22 @@ structure of the protein. This provides insight into how amino acid changes and 
 properties - such as size, charge, and polarity - of the protein interact with each other,
 and how these changes could potentially impact the protein's function. In this annotated
 example, we used lysozyme sequences to detect positively selected sites using Codeml from
-[PAML][1] (for Phylogenetic Analysis by Maximum Likelihood) by Yang (1997) version 4.9j
+PAML[^1] (for Phylogenetic Analysis by Maximum Likelihood) by Yang (1997) version 4.9j
 (February 2020) and mapped them onto a lysozyme protein structure.
 
 ## Inferring positively selected sites in the lysozyme gene c sequences
 
 To infer the positively selected sites in the lysozyme gene sequences, we duplicated
-the results of the analysis by Yang and Nielsen (2002). Here we used the lysozyme data
-set of [Messier and Stewart (1997)][2] and files for the lysozyme gene sequences of 19 distinct
-primate species which is referred to as the ‘‘large’’ data set by [Yang and Nielsen (2002)][3]
+the results of the analysis by Yang and Nielsen (2002)[^3]. Here we used the lysozyme data
+set of Messier and Stewart (1997)[^2] and files for the lysozyme gene sequences of 19 distinct
+primate species which is referred to as the ‘‘large’’ data set by Yang and Nielsen (2002)
 to infer the positively selected sites under the branch-site model. 
  
 As suggested in the example file in PAML, we used branch-site model A to construct 
 branch-site test 2 (branch-site test of positive selection) and tested the alternative
 hypothesis which was already specified in the default control file (`lysozymeLarge.ctl`).
 The identified positively selected sites were given under the NEB (Naive Empirical Bayesian)
-and BEB (Bayes Empirical Bayes) [(Yang et al. 2005)][4] procedure at the end of the analysis.
+and BEB (Bayes Empirical Bayes) (Yang et al. 2005)[^4] procedure at the end of the analysis.
 
 The ancestor of the colobine monkeys was used as the foreground branch and the rest in the phylogeny were
 background branches as it was in the original analysis. Please check the tree file
@@ -70,7 +70,7 @@ We use one of the sequences of the foreground (the lineage ancestral the colobin
 which is "colobus_Cgu&Can", to find the best-matched protein structure, or in other words, the closest
 protein structure to our sequence from the data bank. 
 The nucleic acid sequence should be translated into amino acid sequence. In this example, the sequence 
-of the foreground branch was inserted to the MEGA7 (MEGA7: Molecular Evolutionary Genetics Analysis version 7.0 for bigger datasets) [(Kumar, Stecher, and Tamura 2016)][5] 
+of the foreground branch was inserted to the MEGA7 (MEGA7: Molecular Evolutionary Genetics Analysis version 7.0 for bigger datasets; Kumar, Stecher, and Tamura 2016)[^5] 
 from a text file, translated into the protein sequence, and exported as fasta format.
 
 ```bash
@@ -129,20 +129,20 @@ Group,PDB,amino_acid,probability
 
 ## References
 
-[1]: Yang Z. PAML: a program package for phylogenetic analysis by maximum likelihood. 
+[^1]: Yang Z. PAML: a program package for phylogenetic analysis by maximum likelihood. 
 Comput Appl Biosci. 1997 Oct;13(5):555-6. doi: 10.1093/bioinformatics/13.5.555. 
 PMID: 9367129.
 
-[2]: Messier, W., Stewart, CB. Episodic adaptive evolution of primate lysozymes. 
+[^2]: Messier, W., Stewart, CB. Episodic adaptive evolution of primate lysozymes. 
 Nature 385, 151–154 (1997). https://doi.org/10.1038/385151a0
 
-[3]: Ziheng Yang, Rasmus Nielsen, Codon-Substitution Models for Detecting Molecular Adaptation
+[^3]: Ziheng Yang, Rasmus Nielsen, Codon-Substitution Models for Detecting Molecular Adaptation
 at Individual Sites Along Specific Lineages, Molecular Biology and Evolution, Volume 19, 
 Issue 6, June 2002, Pages 908–917
 
-[4]: Ziheng Yang, Wendy S.W. Wong, Rasmus Nielsen, Bayes Empirical Bayes Inference of Amino Acid 
+[^4]: Ziheng Yang, Wendy S.W. Wong, Rasmus Nielsen, Bayes Empirical Bayes Inference of Amino Acid 
 Sites Under Positive Selection, Molecular Biology and Evolution, Volume 22, Issue 4, April 2005, 
 Pages 1107–1118
 
-[5]: Kumar S, Stecher G, Tamura K. MEGA7: Molecular Evolutionary Genetics Analysis Version 7.0 for Bigger Datasets.
+[^5]: Kumar S, Stecher G, Tamura K. MEGA7: Molecular Evolutionary Genetics Analysis Version 7.0 for Bigger Datasets.
  Mol Biol Evol. 2016 Jul;33(7):1870-4. doi: 10.1093/molbev/msw054. Epub 2016 Mar 22. PMID: 27004904; PMCID: PMC8210823.
