@@ -94,7 +94,7 @@ The command lines arguments are the following:
 
 To create the index, the program will align all sequences from the input aligment with all chains from the selected PDB entries, and keep the best matching pair.
 
-## Coordinates translastion
+## Coordinates translation
 
 Lastly, identified positively selected sites should be translated according to the index using the `sged-translate-coords.py` program.
 In this step, the converted SGED file and the PDB index file are needed. 
