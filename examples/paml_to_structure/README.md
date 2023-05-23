@@ -124,6 +124,41 @@ Group,PDB,amino_acid,probability
 [23],[ILE23],I,0.853
 [37],[GLY37],G,0.510
 ...
+
+## Visualizing the 3D Protein Structure
+
+Visualization of the 3D protein structure and positively selected sites onto it
+were provided by PyMOL (Schrödinger et al. 2020)[^6] version 2.5.5 (2023).
+
+To visualize the protein (134l.pdb) and positively selected sites, we used PyMOL's 
+graphical user interface (GUI) and command-line interface.
+
+First, we open the PDB file in PyMOL 
+```bash
+pymol /path/to/134l.pdb
+```
+
+The model and color of the protein structure can be arranged by using options in PyMOL or,
+```bash
+show mesh, all
+```
+
+Then we select the positively selected residues to show onto the protein structure
+```bash
+select my_residues, resi 14+21+23+37...
+```
+
+Again the model and color of the positively selected residues can be arranged by PyMOL options or,
+```bash
+show spheres, my_residues
+```
+
+Finally, the 3D structure can be saved in PNG format or PDB format
+```bash
+png /path/to/final.png, dpi=300, ray=1
+save /path/to/final.pdb, selection=my_residues
+```
+
 ```
 
 [^1]: Yang Z. PAML: a program package for phylogenetic analysis by maximum likelihood. 
@@ -143,3 +178,6 @@ Pages 1107–1118
 
 [^5]: Kumar S, Stecher G, Tamura K. MEGA7: Molecular Evolutionary Genetics Analysis Version 7.0 for Bigger Datasets.
  Mol Biol Evol. 2016 Jul;33(7):1870-4. doi: 10.1093/molbev/msw054. Epub 2016 Mar 22. PMID: 27004904; PMCID: PMC8210823.
+ 
+ [^6]: Schrödinger, L., & DeLano, W. (2020). PyMOL. Retrieved from http://www.pymol.org/pymol
+ 
