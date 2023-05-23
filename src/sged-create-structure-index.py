@@ -41,7 +41,7 @@ aln_file = ""
 aln_format = "fasta"
 for arg, val in arguments:
     if arg in ("-p", "--pdb"):
-        pdb_files = pdb_files + glob.glob(val)
+        pdb_files = pdb_files + [val]
         print("PDB file: %s" % val)
     elif arg in ("-f", "--pdb-format"):
         pdb_format = val
