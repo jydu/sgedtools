@@ -48,9 +48,9 @@ for arg, val in arguments:
         print("PDB file: %s" % pdb_file)
     elif arg in ("-f", "--pdb-format"):
         pdb_format = val
-        if val != "PDB" and val != "mmCIF" and val[0:7] != "remote:":
+        if val != "PDB" and val != "mmCif" and val[0:7] != "remote:":
             print(
-                "Structure format should be either PDB or mmCIF, or remote:PDB, remote:mmCIF, etc. if you would like to retrieve the file from RCSB"
+                "Structure format should be either PDB or mmCif, or remote:PDB, remote:mmCIF, etc. if you would like to retrieve the file from RCSB"
             )
             exit(-1)
         print("PDB format: %s" % pdb_format)
