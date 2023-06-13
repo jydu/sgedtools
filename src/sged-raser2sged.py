@@ -52,6 +52,7 @@ else:
 # Check option
 if aln_file == "":
     print("An alignment file should be provided.")
+    exit(-1)
 
 
 # Read the raser file
@@ -66,21 +67,33 @@ with open(aln_file, "r") as handle:
     for record in SeqIO.parse(handle, aln_format):
         if record.id == ref_seq_id :
             ref_seq = record.seq
-
-
 # Transform the raser file into a sged-like dataframe
 contents = contents[13:]
 positive_sites = []
 for line in contents:
     site_info = line.split("\t")
     positive_sites.append(site_info)
+    
+number_cols = 0
+for line in contents:
+    if line.count("\t") > number_cols:
+        number_cols = line.count("\t")
 
-raser_df = pd.DataFrame(positive_sites, columns=["position", "amino_acid", "probability", "Proba > 0.95"])
-raser_df.replace(to_replace=[None], value="", inplace=True)
+number_cols+=1  
 
-for counter, param in enumerate(zip(raser_df["probability"], raser_df["Proba > 0.95"])):
-    raser_df["probability"][counter] = param[0].replace("\n", "")
-    raser_df["Proba > 0.95"][counter] = param[1].replace("\n", "")
+if number_cols == 3:
+    raser_df = pd.DataFrame(positive_sites, columns=["position", "amino_acid", "probability"])  
+else:
+    raser_df = pd.DataFrame(positive_sites, columns=["position", "amino_acid", "probability", "Proba > 0.95"])
+raser_df.replace(to_replace=[None], value="", inplace=True) 
+
+if number_cols == 3:
+    for counter, param in enumerate(raser_df["probability"]):
+        raser_df["probability"][counter] = param[0].replace("\n", "")
+else:
+    for counter, param in enumerate(zip(raser_df["probability"], raser_df["Proba > 0.95"])):
+        raser_df["probability"][counter] = param[0].replace("\n", "")
+        raser_df["Proba > 0.95"][counter] = param[1].replace("\n", "")
 
 # Align the sequences from the alignment file and the raser output.
 raser_aa = raser_df["amino_acid"]
@@ -96,8 +109,12 @@ for i, aa in enumerate(ref_seq):
              counter+=1
 
 # Put the output in a dataframe
-df = pd.DataFrame(to_write, columns=["Group", "amino_acid", "probability", "Proba>0.95"])
+if number_cols == 3:
+    df = pd.DataFrame(to_write, columns=["Group", "amino_acid", "probability"])
+else:
+    df = pd.DataFrame(to_write, columns=["Group", "amino_acid", "probability", "Proba>0.95"])
 
 
 # Export to csv
 df.to_csv(output_file, index=False, sep=delim)
+print("Done.")
