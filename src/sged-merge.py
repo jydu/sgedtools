@@ -47,11 +47,11 @@ for arg, val in arguments:
         "--group",
         "--group1",
     ):  # Note: if only this arg is passed, group col name is assumed to be identical in both files
-        group_col1 = val
-        group_col2 = val
+        group_col1 = val.split(",")
+        group_col2 = val.split(",")
         print("Coordinates are in column: %s" % group_col1)
     elif arg in ("-h", "--group2"):
-        group_col2 = val
+        group_col2 = val.split(",")
         print("Coordinates for second file are in column: %s" % group_col2)
     elif arg in ("-j", "--join"):
         join_type = val
@@ -73,7 +73,7 @@ with open(sged_file2) as csv_file2:
     df2 = pandas.read_csv(csv_file2, sep=delim, dtype=str, comment="#")
 
 frames = [df1, df2]
-df = pandas.merge(df1, df2, how=join_type, left_on=group_col1, right_on=group_col2)
+df = pandas.merge(df1, df2, how=join_type, left_on=[x for x in group_col1], right_on=[x for x in group_col2])
 
 # Write results:
 df.to_csv(output_file, sep=delim, na_rep="NA", index=False)

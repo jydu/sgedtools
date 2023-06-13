@@ -37,7 +37,7 @@ for arg, val in arguments:
         print("Output index file: %s" % output_file)
 # TODO: check that all args are provided, that file exist, and eventually allow for various alignment formats.
 
-print("Parsing structure(s)...")
+print("Parsing sequence(s)...")
 
 # We retrieve the original sequence from the alignment:
 with open(aln_file, "r") as handle:

@@ -67,8 +67,6 @@ with open(aln_file, "r") as handle:
     for record in SeqIO.parse(handle, aln_format):
         if record.id == ref_seq_id :
             ref_seq = record.seq
-
-
 # Transform the raser file into a sged-like dataframe
 contents = contents[13:]
 positive_sites = []
@@ -119,5 +117,4 @@ else:
 
 # Export to csv
 df.to_csv(output_file, index=False, sep=delim)
-
 print("Done.")
