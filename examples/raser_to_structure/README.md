@@ -60,7 +60,7 @@ The command line arguments are:
 * '-o' or '--output=' is the name of the output file (index file)
 * '-x' or '--exclude-incomplete' only keeps the chain(s) with the lowest amount of incomplete data (e.g. amino acids with a missing lateral chain).
 
-This example will be fetching the PDB files corresponding to the PDB ids on a specified server. It will then chose the best-matching protein sequence according to the alignment.
+The other way to do it is to fetch the PDB files corresponding to the PDB ids on a specified server. It will then chose the best-matching protein sequence according to the alignment. To do this, use the `remote:` command, like showed here.
 ```{bash}
 python3 sged-create-structure-index.py \
         -p 5JCA \
@@ -133,8 +133,8 @@ The last step is to get the secondary structure information for the translated c
 ```{bash}
 python3 sged sged-structure-infos.py \
         -s CLU_000422_3_3_translated_coords.csv \
-        -p 5jca.pdb \
-        -f PDB \
+        -p 5JCA \
+        -f remote:PDB \
         -g PDB \
         -a L \
         -m DSSP \
