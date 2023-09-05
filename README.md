@@ -17,3 +17,6 @@ Group	Size	IsConstant	Dmax	Stat	Nmin	p.value	nobs	code	Method	FDR
 
 This package contains a series of scripts to manipulate such file.
 These scripts are written in Python, and make (sometimes) use of the BioPython libraries (for sequence alignment and 3D structure manipulation).
+Below is a short description of the available programs. Each of them can be run without argument in order to get a list of available options. Concrete application examples are availble in the `example` subdirectory.
+
+
