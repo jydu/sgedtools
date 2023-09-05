@@ -39,7 +39,7 @@ body, html {
       <a href="#installation" class="w3-button w3-block w3-black">INSTALLATION</a>
     </div>
     <div class="w3-col s3">
-      <a href="#use" class="w3-button w3-block w3-black">USAGE</a>
+      <a href="#usage" class="w3-button w3-block w3-black">USAGE</a>
     </div>
   </div>
 </div>
@@ -47,7 +47,7 @@ body, html {
 <!-- Header with image -->
 <header class="bgimg w3-display-container w3-grayscale-min" id="home">
   <div class="w3-display-bottomleft w3-center w3-padding-large w3-hide-small">
-    <span class="w3-tag">[Site/Group Extended Format]</span>
+    <span class="w3-tag">[Site/Group Extended DATA format]</span>
   </div>
   <div class="w3-display-middle w3-center">
     <span class="w3-text-white" style="font-size:90px">SgedTools</span>
@@ -64,7 +64,14 @@ body, html {
 <div class="w3-container" id="about">
   <div class="w3-content" style="max-width:700px">
     <h5 class="w3-center w3-padding-64"><span class="w3-tag w3-wide">About SgedTools</span></h5>
-    <p>(under construction)</p>
+    <p>The Site/Group Extended Data (<strong>SGED</strong>) is a simple text format to store annotation of (groups of) sequence alignment sites. Basically, SGED files are CSV or TSV files with a column representing the site index. Content in this column has a special format, surrounded by square brackets, where positions are separated by semi-colons:
+    <code>
+      [3;12;987]
+    </code>.
+    SGED files start with a header line, containing the column names. The special index column is usually the first and named "Group" or "Site", but none of these are strict requirements.
+    </p>
+    <p><strong>SgedTools</strong> is set of programs to manipulate SGED files.
+    Each program performs a specific task, like translating coordinates, merging files, adding annotations. Complex manipulations and analyses can be performed by combining the various tools.</p>
   </div>
 </div>
 
@@ -74,7 +81,16 @@ body, html {
  
     <h5 class="w3-center w3-padding-48"><span class="w3-tag w3-wide">Installing SgedTools</span></h5>
   
-    <p>(under construction)</p>
+    <p>The SgedTools are standalone python (version 3) scripts that can simply be copied and executed. They are located in the <strong>src</strong> sub-directory of the distribution. The programs can be obtained at <a href="https://github.com/jydu/sgedtools">GitHub.com</a>, stable releases are available <a href="https://github.com/jydu/sgedtools/releases">here</a> for download.</p>
+    <p>Some python packages are needed for them to work properly, and some of these python packages require external software to be installed:
+    <ul>
+      <li>Getopt, for command line arguments,</li>
+      <li>Ppandas, for spreadsheet data I/O and manipulation,</li>
+      <li>BioPython, for sequence data I/O,</li>
+      <li>NumPy and SciPy, for calculations and numerics.</li>
+    </ul>
+    These packages can all be installed using the pip manager.
+    </p>
   </div>
 </div>
 
