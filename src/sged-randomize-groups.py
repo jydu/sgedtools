@@ -3,7 +3,7 @@
 """ Created on 12/03/20 by jdutheil
 
     Generates a list of groups with characteristics similar to a given set of groups.
-    The output groups have the same size and similar site porperties, but sites are taken randomly.
+    The output groups have the same size and similar site properties, but sites are taken randomly.
     In this version, site norms are not discretized but a similarity threshold is used.
     To remove bias due to skewed distribution of norms, a correction is further introduced.
 """
