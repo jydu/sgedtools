@@ -16,7 +16,7 @@ unix_opt = "1:2:l:f:a:o:ch"
 full_opt = [
     "aln1=",
     "aln2=",
-    "aln-list",
+    "aln-list=",
     "format=",
     "output-aln=",
     "output-sged=",
@@ -35,9 +35,9 @@ Available arguments:
     --aln-list (-l): File with list of input alignment files.
         Required if --aln1 and --aln2 are not provided.
         On path (absolute or relative to current directory) per line.
-    --format (-f): Input alignment format, any recognized by Bio::AlignIO
-        (see https://biopython.org/wiki/AlignIO).
-        All alignments must be in the same format.
+    --format (-f): Input alignment format (default: fasta).
+        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO).
+        All input alignments must be in the same format.
     --output-aln (-o): Output concatenated alignment file (required).
         Same format as the input one.
     --output-sged (-o): Output SGED file (required).
@@ -61,8 +61,6 @@ except getopt.error as err:
 
 tabsep = True  # TSV by default
 aln_paths = []
-output_aln_file = "concat"
-output_sged_file = "concat.sged"
 aln_format = "fasta"
 for arg, val in arguments:
     if arg in ("-1", "--aln1"):
@@ -94,9 +92,11 @@ else:
     delim = ","
 
 # Check required arguments
-if not 'sged_file' in globals():
+if len(aln_paths) < 2:
    usage()
-if not 'output_file' in globals():
+if not 'output_aln_file' in globals():
+   usage()
+if not 'output_sged_file' in globals():
    usage()
 
 # Start parsing
@@ -108,6 +108,7 @@ concat_aln = None
 pos_count = 0
 
 for aln_count, aln_path in enumerate(aln_paths):
+    aln_path = aln_path.strip()
     print("Reading input alignment %s." % aln_path)
     aln = AlignIO.read(aln_path, aln_format)
     aln.sort()
