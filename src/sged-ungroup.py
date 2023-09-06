@@ -12,21 +12,24 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:o:d:g:c"
-full_opt = ["sged=", "output=", "data=", "groups=", "csv"]
+unix_opt = "s:o:d:g:ch"
+full_opt = ["sged=", "output=", "data=", "groups=", "csv", "help"]
 
 def usage() :
     print(
 """
+sged-ungroup
+
 Available arguments:
-    --sged (-s): Input SGED file (required)
-    --output (-o): Output SGED file (required)
-    --group (-g): Column where group coordinates are stored (default: Group)
+    --sged (-s): Input SGED file (required).
+    --output (-o): Output SGED file (required).
+    --group (-g): Column where group coordinates are stored (default: Group).
     --data (-d): Column selection (default: empty selection). 
         Indicates which column should be added to the output file.
         Entries in the input file for the selected columns will be 
         duplicated in each entry in the output file.
-    --csv (-c): Input SGED file is with comas instead of tabs (default)
+    --csv (-c): Input SGED file is with comas instead of tabs (default).
+    --help (-h): Print this message.
 """
     )
     sys.exit()
