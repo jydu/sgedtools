@@ -72,6 +72,52 @@ body, html {
     </p>
     <p><strong>SgedTools</strong> is set of programs to manipulate SGED files.
     Each program performs a specific task, like translating coordinates, merging files, adding annotations. Complex manipulations and analyses can be performed by combining the various tools.</p>
+
+    <p>The SgedTools currently include the following programs:</br/>
+
+    <h3>Translate coordinates</h3>
+    <dl>
+      <dt><code>sged-create-sequence-index.py</code></dt>
+      <dd>Create an index file from a sequence alignment. Allows conversion between alignment positions and sequence specific positions.</dd>
+      <dt><code>sged-create-structure-index.py</code></dt>
+      <dd>Match sequences in a sequence alignment with one or more three-dimensional structures. Creates an index to translate between alignment positions and structural coordinates.</dd>
+      <dt><code>sged-translate-coords.py</code></dt>
+      <dd>Converte coordinates of the entries in a SGED file from one reference to another (for instance from alignment positions to PDB coordinates). Requires a previously computed index files.</dd>
+    </dl>
+
+    <h3>Manipulate groups</h3>
+    <dl>
+      <dt><code>sged-get-all-pairs.py</code></dt>
+      <dd>Convert any groups of size &gt; 2 into multiple pairs. For instance, <code>[1;2;3]</code> becomes <code>[1;2] [1;3] [2;3]</code> (1 line -&gt; 3 lines).</dd>
+      <dt><code>sged-group-test-inclusion.py</code></dt>
+      <dd>Test whether the groups in one files are included in a second file.</dd>
+      <dt><code>sged-merge.py</code></dt>
+      <dd>Merge two SGED files. Several join operations are suported.</dd>
+      <dt><code>sged-randomize-groups.py</code></dt>
+      <dd>Generates a list of groups with characteristics similar to a given set of groups.
+    The output groups have the same size and similar site properties, but sites are taken randomly.</dd>
+      <dt><code>sged-ungroup.py</code></dt>
+      <dd>Convert groups of positions into list of single positions. For instance, <code>[1;2;3]</code> becomes <code>[1] [2] [3]</code> (1 line -&gt; 3 lines).</dd>
+    </dl>
+    
+    <h3>Structure analysis</h3>
+    <dl>
+      <dt><code>sged-structure-list.py</code></dt>
+      <dd>List all positions in a structure file and output them in SGED format.</dd>
+      <dt><code>sged-structure-infos.py</code></dt>
+      <dd>Compute several structural statistics of sites or groups from a three dimensional structure (e.g., 3D distance, solvent accessibility, secondary structure, etc.).</dd>
+    </dl>
+
+    <h3>Convert from other file formats</h3>
+    <dl>
+      <dt><code>sged-disembl2sged.py</code></dt>
+      <dd>Convert the output of the <code>disembl</code> program (for predicting intrinsically disordered regions in a protein structure) to SGED format.</dd>
+      <dt><code>sged-paml2sged.py</code></dt>
+      <dd>Convert the output of <code>PAML</code> site models (sites under positive selection) to SGED format.</dd>
+      <dt><code>sged-raser2sged.py</code></dt>
+      <dd>Convert the output of <a href="https://www.tau.ac.il/~penn/raser.html">RASER</a> (rate shift estimator) to SGED format.</dd>
+    </dl>
+    </p>
   </div>
 </div>
 
@@ -84,12 +130,18 @@ body, html {
     <p>The SgedTools are standalone python (version 3) scripts that can simply be copied and executed. They are located in the <strong>src</strong> sub-directory of the distribution. The programs can be obtained at <a href="https://github.com/jydu/sgedtools">GitHub.com</a>, stable releases are available <a href="https://github.com/jydu/sgedtools/releases">here</a> for download.</p>
     <p>Some python packages are needed for them to work properly, and some of these python packages require external software to be installed:
     <ul>
-      <li>Getopt, for command line arguments,</li>
       <li>Ppandas, for spreadsheet data I/O and manipulation,</li>
       <li>BioPython, for sequence data I/O,</li>
       <li>NumPy and SciPy, for calculations and numerics.</li>
     </ul>
-    These packages can all be installed using the pip manager.
+    These packages can all be installed using the pip manager:
+    <pre><code>
+    pip3 install pandas
+    pip3 install numpy
+    pip3 install scipy
+    pip3 install biopython
+    </code></pre>
+    That is pretty much it!
     </p>
   </div>
 </div>
