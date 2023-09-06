@@ -12,8 +12,25 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:o:d:c"
-full_opt = ["sged=", "output=", "data=", "csv"]
+unix_opt = "s:o:d:g:c"
+full_opt = ["sged=", "output=", "data=", "groups=", "csv"]
+
+def usage() :
+    print(
+"""
+Available arguments:
+    --sged (-s): Input SGED file (required)
+    --output (-o): Output SGED file (required)
+    --group (-g): Column where group coordinates are stored (default: Group)
+    --data (-d): Column selection (default: empty selection). 
+        Indicates which column should be added to the output file.
+        Entries in the input file for the selected columns will be 
+        duplicated in each entry in the output file.
+    --csv (-c): Input SGED file is with comas instead of tabs (default)
+"""
+    )
+    sys.exit()
+
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -22,6 +39,7 @@ except getopt.error as err:
 
 tabsep = True  # TSV by default
 selected_cols = []
+group_col = "Group"
 for arg, val in arguments:
     if arg in ("-s", "--sged"):
         sged_file = val
@@ -31,8 +49,13 @@ for arg, val in arguments:
         print("Output ungrouped file: %s" % output_file)
     elif arg in ("-d", "--data"):
         selected_cols = val.split(",")
+    elif arg in ("-g", "--groups"):
+        group_col = val
+        print("Group coordinates are in column: %s" % group_col)
     elif arg in ("-c", "--csv"):
         tabsep = False
+    elif arg in ("-h", "--help"):
+        usage()
 
 if tabsep:
     print("SGED file is in TSV format")
@@ -41,10 +64,16 @@ else:
     print("SGED file is in CSV format")
     delim = ","
 
+# Check required arguments
+if not 'sged_file' in globals():
+   usage()
+if not 'output_file' in globals():
+   usage()
+
 # Start parsing
 with open(sged_file) as csv_file:
     df = pandas.read_csv(csv_file, sep=delim, dtype=str)
-    groups = df["Group"]
+    groups = df[group_col]
     with open(output_file, "w") as handle:
         handle.write("Group%s%s\n" % (delim, delim.join(df[selected_cols].columns)))
         for i, g in enumerate(groups):
