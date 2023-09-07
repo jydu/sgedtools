@@ -302,7 +302,7 @@ print("Write the results...")
 
 # Now convert each alignment position into a PDB position and write the result to a file:
 with open(output_file, "w") as handle:
-    handle.write("# SGED index file version 0.99\n")
+    handle.write("# SGED index file version 1.00\n")
     handle.write("# SGED input alignment = %s\n" % aln_file)
     handle.write("# SGED input alignment sequence = %s\n" % best_aln)
     handle.write("# SGED input PDB = %s\n" % best_pdb_file)
@@ -312,7 +312,7 @@ with open(output_file, "w") as handle:
     for seq_pos, aln_pos in aln_index.items():
         if seq_pos in seq_index:
             pdb_pos = seq_index[seq_pos]
-            handle.write("%s,%s\n" % (aln_pos + 1, pdb_index[pdb_pos]))
+            handle.write("%s,%s:%s\n" % (aln_pos + 1, best_pdb_chain, pdb_index[pdb_pos]))
         else:
             handle.write("%s,NA\n" % (aln_pos + 1))
 
