@@ -5,7 +5,7 @@
     Merge a series of sequence alignments and output a SGED file with coordinates.
 """
 
-import getopt, sys
+import getopt, sys, os
 import pandas
 from Bio import AlignIO
 
@@ -29,6 +29,8 @@ def usage() :
 """
 sged-concatenate-alignments
 
+Concatenates alignments and create corresponding index files.
+
 Available arguments:
     --aln1 (-1): Input first single input alignment file.
     --aln2 (-2): Input second single input alignment file.
@@ -40,7 +42,7 @@ Available arguments:
         All input alignments must be in the same format.
     --output-aln (-o): Output concatenated alignment file (required).
         Same format as the input one.
-    --output-sged (-o): Output SGED file (required).
+    --output-sged (-o): Output SGED file (optional).
         The output file will contain a Group column with concatenated alignment
         positions in the order specified by the input options/list.
         The following columns are also added:
@@ -93,11 +95,9 @@ else:
 
 # Check required arguments
 if len(aln_paths) < 2:
-   usage()
+    usage()
 if not 'output_aln_file' in globals():
-   usage()
-if not 'output_sged_file' in globals():
-   usage()
+    usage()
 
 # Start parsing
 global_pos = []
@@ -107,30 +107,51 @@ aln_id = []
 concat_aln = None
 pos_count = 0
 
+# Concatenate and write indexes:
 for aln_count, aln_path in enumerate(aln_paths):
     aln_path = aln_path.strip()
+    aln_file = os.path.basename(aln_path)
     print("Reading input alignment %s." % aln_path)
     aln = AlignIO.read(aln_path, aln_format)
     aln.sort()
+    offset = 0
     if concat_aln is None:
         concat_aln = aln
     else:
+        offset = concat_aln.get_alignment_length()
         concat_aln = concat_aln + aln
+    
+    # Record index:
     for i in range(aln.get_alignment_length()):
         pos_count = pos_count + 1
-        global_pos.append("[%i]" % pos_count)
-        local_pos.append("[%i]" % (i + 1))
+        global_pos.append("%i" % pos_count)
+        local_pos.append("%i" % (i + 1))
         aln_nb.append(aln_count + 1)
-        aln_id.append(aln_path)
+        aln_id.append(aln_file)
 
+    # Write index:
+    with open(aln_file + "_AlnIndex.txt", "w") as handle:
+        handle.write("# SGED index file version 1.00\n")
+        handle.write("# SGED input alignment = %s\n" % aln_file)
+        handle.write("# SGED index start\n")
+        handle.write("AlnGlobalPos,AlnLocalPos\n")
+    
+        for i in range(aln.get_alignment_length()):
+            handle.write("%s,%s\n" % (global_pos[offset + i], local_pos[offset + i]))
+        
 # Write concatenated alignment:
-with open(output_aln_file, "w") as aln_file:
+with open(output_aln_file, "w") as handle:
     AlignIO.write(concat_aln, aln_file, aln_format)
 
 # Write SGED file:
-with open(output_sged_file, "w") as csv_file:
-    d = dict(Group=global_pos, AlnPos=local_pos, AlnIndex=aln_nb, AlnId=aln_id)
-    df = pandas.DataFrame(data=d)
-    df.to_csv(csv_file, index=False, sep=delim)
+if 'output_sged_file' in globals():
+    with open(output_sged_file, "w") as csv_file:
+        d = dict(
+                Group  = ["[%s]" % x for x in global_pos],
+                AlnPos = ["[%s]" % x for x in local_pos],
+                AlnIndex = aln_nb,
+                AlnId = aln_id)
+        df = pandas.DataFrame(data=d)
+        df.to_csv(csv_file, index=False, sep=delim)
 
 print("Done.")
