@@ -69,9 +69,9 @@ else:
 
 # Check required arguments
 if not 'sged_file' in globals():
-   usage()
+    usage()
 if not 'output_file' in globals():
-   usage()
+    usage()
 
 # Start parsing
 with open(sged_file) as csv_file:

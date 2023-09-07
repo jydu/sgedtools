@@ -78,11 +78,13 @@ body, html {
     <h3>Translate coordinates</h3>
     <dl>
       <dt><code>sged-concatenate-alignments.py</code></dt>
-      <dd>Concantenate two or more alignments and create an index of the relative positions of each alignment column in the concatenated alignment</dd>
+      <dd>Concantenate two or more alignments and create indexes of the relative positions of each alignment column in the concatenated alignment</dd>
       <dt><code>sged-create-sequence-index.py</code></dt>
       <dd>Create an index file from a sequence alignment. Allows conversion between alignment positions and sequence specific positions.</dd>
       <dt><code>sged-create-structure-index.py</code></dt>
       <dd>Match sequences in a sequence alignment with one or more three-dimensional structures. Creates an index to translate between alignment positions and structural coordinates.</dd>
+      <dt><code>sged-liftover-index.py</code></dt>
+      <dd>Translate one index using a second one, so that A-&gt;B + B-&gt;C = A-&gt;C</dd>
       <dt><code>sged-translate-coords.py</code></dt>
       <dd>Converte coordinates of the entries in a SGED file from one reference to another (for instance from alignment positions to PDB coordinates). Requires a previously computed index files.</dd>
     </dl>
