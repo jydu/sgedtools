@@ -125,12 +125,28 @@ python3 ../../src/sged-liftover-index.py \
          --index1 cox1.aln.fasta_AlnIndex.txt \
          --index2 cox1_PdbIndex.txt \
          --output cox1.aln.fasta_PdbIndex.txt
+
+python3 ../../src/sged-liftover-index.py \
+         --index1 cox2.aln.fasta_AlnIndex.txt \
+         --index2 cox2_PdbIndex.txt \
+         --output cox2.aln.fasta_PdbIndex.txt
+
+python3 ../../src/sged-liftover-index.py \
+         --index1 cox3.aln.fasta_AlnIndex.txt \
+         --index2 cox3_PdbIndex.txt \
+         --output cox3.aln.fasta_PdbIndex.txt
 ```
-TODO
 
 We then merge the three indexes into a single one, since they are complementary:
 
-TODO
+```bash
+python3 ../../src/sged-merge-indexes.py \
+         --index cox1.aln.fasta_PdbIndex.txt \
+         --index cox2.aln.fasta_PdbIndex.txt \
+         --index cox3.aln.fasta_PdbIndex.txt \
+         --output coxall_PdbIndex.txt
+```
+
 
 Finally, we get the PDB coordinates of each coevolving group:
 
