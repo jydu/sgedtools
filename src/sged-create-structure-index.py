@@ -10,24 +10,51 @@ import getopt, sys, glob
 from Bio.PDB import *
 from Bio.SeqUtils import *
 from Bio import SeqIO
-from Bio import pairwise2
-from Bio.Data import SCOPData
-from Bio.SubsMat import MatrixInfo as matlist
+from Bio.Align import PairwiseAligner
+from Bio.Align import substitution_matrices
+from Bio.Data import PDBData
 
-blosum62 = matlist.blosum62
+aligner = PairwiseAligner(mode = 'global')
+aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
 
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:f:a:g:o:x"
+unix_opt = "p:i:f:a:g:o:x"
 full_opt = [
     "pdb=",
+    "pdb-id=",
     "pdb-format=",
     "alignment=",
     "alignment-format=",
     "output=",
     "exclude-incomplete",
 ]
+
+def usage() :
+    print(
+"""
+sged-create-structure-index
+
+Available arguments:
+    --pdb (-p): Input protein data bank file (required).
+        Can be used multiple times to selected several entries.
+        File globs can be used to select multiple files.
+    --pdb-format (-f): Format of the protein data bank file (default: PDB).
+        Either PDB or mmCif is supported. In addition, remote:PDB or remote:mmCif
+        allow to directly download the structure file from the Protein Data Bank.
+        In this case, --pdb-id indicates the PDB id.
+    --pdb-id (-i): Specify the id of the PDB file to retrieve remotely.
+    --alignment (-a): Input alignment file (required);
+    --alignment-format (-g): Input alignment format (default: fasta).
+        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO).
+    --output (-o): Output index file (required).
+    --exclude-incomplete (-x): Exclude incomplete chains from scan (default: false).
+    --help (-h): Print this message.
+"""
+    )
+    sys.exit()
+
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -35,19 +62,22 @@ except getopt.error as err:
     sys.exit(2)
 
 pdb_files = []
+pdb_ids = []
 pdb_format = "PDB"
 exclude_incomplete = False
-aln_file = ""
 aln_format = "fasta"
 for arg, val in arguments:
     if arg in ("-p", "--pdb"):
         pdb_files = pdb_files + glob.glob(val)
         print("PDB file: %s" % val)
+    elif arg in ("-i", "--pdb-id"):
+        pdb_ids.append(val)
+        print("PDB id: %s" % val)
     elif arg in ("-f", "--pdb-format"):
         pdb_format = val
         if val != "PDB" and val != "mmCIF" and val[0:7] != "remote:":
             print(
-                "Structure format should be either PDB or mmCIF, or remote:PDB, remote:mmCIF, etc. if you would like to retrieve the file from RCSB"
+                "Structure format should be either PDB or mmCif, or remote:PDB, remote:mmCif, etc. if you would like to retrieve the file from RCSB"
             )
             exit(-1)
         print("PDB format: %s" % pdb_format)
@@ -62,17 +92,22 @@ for arg, val in arguments:
         print("Output index file: %s" % output_file)
     elif arg in ("-x", "--exclude-incomplete"):
         exclude_incomplete = True
+    elif arg in ("-h", "--help"):
+        usage()
 
 # Check options:
 
-if len(pdb_files) == 0:
-    print("At least one structure file should be provided.")
-    exit(-1)
+if len(pdb_files) == 0 and len(pdb_ids) == 0:
+    print("Error: at least one structure file/id should be provided.")
+    usage()
 
-if aln_file == "":
-    print("An alignment file should be provided.")
-    exit(-1)
+if not 'aln_file' in globals():
+    print("Error: an alignment file should be provided.")
+    usage()
 
+if not 'output_file' in globals():
+    print("Error: an output file should be provided.")
+    usage()
 
 print("Parsing structure(s)...")
 
@@ -84,28 +119,32 @@ if pdb_format.startswith("remote:"):
     pdb_format = remote_format
 
 if pdb_format.upper() == "PDB":
+    pdb_format = "PDB" #Case needs to be respected for remote access
     parser = PDBParser()
 elif pdb_format.upper() == "MMCIF":
+    pdb_format == "mmCif" #Case needs to be respected for remote access
     parser = MMCIFParser()
 else:
     print("ERROR!!! Unsupported structure format: %s" % pdb_format)
     exit(-1)
 
 
-pdb_seqs = dict()
-
-prop_incomplete = dict()
-for pdb_file in pdb_files:
-    if "pdb_server" in locals():
+if "pdb_server" in locals():
+    for pdb_id in pdb_ids:
         print("Retrieving structure from remote server...")
         pdb_file = pdb_server.retrieve_pdb_file(
-            pdb_code=pdb_file,
+            pdb_code=pdb_id,
             obsolete=False,
             pdir=".",
             file_format=pdb_format,
             overwrite=False,
         )
+        pdb_files.append(pdb_file)
+        print("Downloaded PDB file %s..." % pdb_file)
 
+pdb_seqs = dict()
+prop_incomplete = dict()
+for pdb_file in pdb_files:
     print("Parsing PDB file %s..." % pdb_file)
     structure = parser.get_structure("STRUCT", pdb_file)
 
@@ -133,7 +172,7 @@ for pdb_file in pdb_files:
 
             if is_aa(residue):
                 res = residue.get_resname().upper()
-                letter = SCOPData.protein_letters_3to1[res]
+                letter = PDBData.protein_letters_3to1_extended[res]
                 if not letter in Polypeptide.d1_to_index:
                     letter = "X"
                 chain_seq = chain_seq + letter
@@ -166,9 +205,7 @@ best_aln = ""
 best_score = 0
 for pdb_id, pdb_seq in pdb_seqs.items():
     for aln_id, aln_seq in aln_seqs.items():
-        score = pairwise2.align.globaldx(
-            str(aln_seq.seq).replace("-", ""), pdb_seq, blosum62, score_only=True
-        )
+        score = aligner.score(str(aln_seq.seq).replace("-", ""), pdb_seq)
         if score > best_score:
             best_score = score
             best_pdb = pdb_id
@@ -212,16 +249,14 @@ for residue in chain:
     if is_aa(residue):
         res = residue.get_resname().upper()
         pos = pos + 1
-        letter = SCOPData.protein_letters_3to1[res]
+        letter = PDBData.protein_letters_3to1_extended[res]
         if not letter in Polypeptide.d1_to_index:
             letter = "X"
         pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
 
 # Get the best alignment:
-pairwise_aln = pairwise2.align.globaldx(
-    str(aln_seq.seq).replace("-", ""), pdb_seq, blosum62
-)
-print(pairwise2.format_alignment(*pairwise_aln[0]))
+pairwise_aln = aligner.align(str(aln_seq.seq).replace("-", ""), pdb_seq)
+print(pairwise_aln[0])
 
 # Get the alignment index. If several alignments are provided, only consistent positions are kept:
 def build_aln_index(aln):
