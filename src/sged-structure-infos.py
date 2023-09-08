@@ -13,22 +13,50 @@ from Bio.PDB import *
 from Bio.PDB.DSSP import DSSP
 from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from Bio.SeqUtils import *
-from Bio.Data import SCOPData
+from Bio.Data import PDBData
 
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:p:f:o:m:g:a:c"
+unix_opt = "s:p:i:f:o:m:g:d:ch"
 full_opt = [
     "sged=",
     "pdb=",
+    "pdb-id=",
     "pdb-format=",
     "output=",
     "measures=",
-    "groups=",
-    "chain=",
+    "group=",
+    "dssp=",
     "csv",
+    "help"
 ]
+
+def usage() :
+    print(
+"""
+sged-structure-infos
+
+    Get structural info from a PDB file for groups specified in a SGED file.
+
+Available arguments:
+    --sged (-s): Input SGED file (required).
+    --pdb (-p): Input protein data bank file (required).
+    --pdb-format (-f): Format of the protein data bank file (default: PDB).
+        Either PDB or mmCif is supported. In addition, remote:PDB or remote:mmCif
+        allow to directly download the structure file from the Protein Data Bank.
+        In this case, --pdb-id indicates the PDB id.
+    --pdb-id (-i): Specify the id of the PDB file to retrieve remotely.
+    --group (-g): Column where group coordinates are stored (default: Group).
+    --output (-o): Output SGED file (required).
+    --result (-r): Column where to store test results (required).
+    --dssp (-d): Name of the DSSP executable (default: mkdssp).
+    --csv (-c): Input SGED file is with comas instead of tabs (default: tabs).
+    --help (-h): Print this message.
+"""
+    )
+    sys.exit()
+
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -39,6 +67,7 @@ pdb_format = "PDB"
 tabsep = True  # TSV by default
 group_col = "Group"
 measures = []
+dssp_exe = "mkdssp"
 for arg, val in arguments:
     if arg in ("-s", "--sged"):
         sged_file = val
@@ -46,6 +75,9 @@ for arg, val in arguments:
     elif arg in ("-p", "--pdb"):
         pdb_file = val
         print("PDB file: %s" % pdb_file)
+    elif arg in ("-i", "--pdb-id"):
+        pdb_id = val
+        print("PDB id: %s" % val)
     elif arg in ("-f", "--pdb-format"):
         pdb_format = val
         if val != "PDB" and val != "mmCif" and val[0:7] != "remote:":
@@ -59,14 +91,19 @@ for arg, val in arguments:
         print("Output info file: %s" % output_file)
     elif arg in ("-m", "--measures"):
         measures = val.split(",")
-    elif arg in ("-g", "--groups"):
+    elif arg in ("-g", "--group"):
         group_col = val
         print("PDB coordinates are in column: %s" % group_col)
     elif arg in ("-a", "--chain"):
         chain_sel = val
         print("PDB chain to use: %s" % chain_sel)
+    elif arg in ("-d", "--dssp"):
+        dssp_exe = val
+        print("DSSP command to use: %s" % dssp_exe)
     elif arg in ("-c", "--csv"):
         tabsep = False
+    elif arg in ("-h", "--help"):
+        usage()
 
 if tabsep:
     print("SGED file is in TSV format")
@@ -75,28 +112,48 @@ else:
     print("SGED file is in CSV format")
     delim = ","
 
+# Check options:
+
+if not 'sged_file' in globals():
+    print("Error: an input SGED file should be provided.")
+    usage()
+
+if not 'pdb_file' and not 'pdb_id' in globals():
+    print("Error: a structure file or id should be provided.")
+    usage()
+
+if not 'output_file' in globals():
+    print("Error: an output file should be provided.")
+    usage()
+
 # Parse the PDB and compute
+
 if pdb_format.startswith("remote:"):
     remote_format = pdb_format[7:]
     pdb_server = PDBList(
-        server="ftp://ftp.wwpdb.org", pdb=None, obsolete_pdb=False, verbose=True
-    )
-    pdb_file = pdb_server.retrieve_pdb_file(
-        pdb_code=pdb_file,
-        obsolete=False,
-        pdir=".",
-        file_format=remote_format,
-        overwrite=False,
+        server="ftp://ftp.wwpdb.org", pdb = None, obsolete_pdb = False, verbose = True
     )
     pdb_format = remote_format
 
 if pdb_format.upper() == "PDB":
+    pdb_format = "PDB" #Case needs to be respected for remote access
     parser = PDBParser()
 elif pdb_format.upper() == "MMCIF":
+    pdb_format == "mmCif" #Case needs to be respected for remote access
     parser = MMCIFParser()
 else:
     print("ERROR!!! Unsupported structure format: %s" % pdb_format)
     exit(-1)
+
+if "pdb_server" in locals():
+    pdb_file = pdb_server.retrieve_pdb_file(
+        pdb_code = pdb_id,
+        obsolete = False,
+        pdir = ".",
+        file_format = remote_format,
+        overwrite = False,
+    )
+    print("Downloaded PDB file %s..." % pdb_file)
 
 structure = parser.get_structure("STRUCT", pdb_file)
 
@@ -108,7 +165,6 @@ if len(structure) > 1:
     )
 
 model = structure[0]
-chain = model[chain_sel]
 
 
 class ModelSelect(Select):
@@ -148,11 +204,20 @@ with open(sged_file) as csv_file:
                 res_sel = tmp.split(";")
                 # Ignore missing data:
                 res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                positions = [x[3:] for x in res_sel_cleaned]
-                states = [x[:3] for x in res_sel_cleaned]
+                #positions = [x[3:] for x in res_sel_cleaned]
+                #states = [x[:3] for x in res_sel_cleaned]
                 calphas = []
                 incomplete = False
-                for j, pos in enumerate(positions):
+                for j, pos in enumerate(res_sel_cleaned):
+                    s = pos.split(":") # Assuming format Chain:Residue
+                    if len(s) != 2:
+                        print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                        exit(-1)
+
+                    chain_sel = s[0]
+                    pos = s[1][3:]
+                    state = s[1][:3]
+                    chain = model[chain_sel]
                     insert_code = " "
                     try:
                         int(pos)
@@ -165,12 +230,12 @@ with open(sged_file) as csv_file:
                     res_id = (" ", int(pos), insert_code)
                     if not res_id in chain:
                         res_id = (
-                            "H_%s" % states[j],
+                            "H_%s" % state,
                             int(pos),
                             insert_code,
                         )  # Try with HETATM
 
-                    if chain[res_id].resname == states[j]:
+                    if chain[res_id].resname == state:
                         if "CA" in chain[res_id]:
                             calphas.append(chain[res_id]["CA"])
                         else:
@@ -219,11 +284,19 @@ with open(sged_file) as csv_file:
                 res_sel = tmp.split(";")
                 # Ignore missing data:
                 res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                positions = [x[3:] for x in res_sel_cleaned]
-                states = [x[:3] for x in res_sel_cleaned]
+                #positions = [x[3:] for x in res_sel_cleaned]
+                #states = [x[:3] for x in res_sel_cleaned]
                 calphas = []
                 incomplete = False
-                for j, pos in enumerate(positions):
+                for j, pos in enumerate(res_sel_cleaned):
+                    s = pos.split(":") # Assuming format Chain:Residue
+                    if len(s) != 2:
+                        print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                        exit(-1)
+                    chain_sel = s[0]
+                    pos = s[1][3:]
+                    state = s[1][:3]
+                    chain = model[chain_sel]
                     insert_code = " "
                     try:
                         int(pos)
@@ -236,12 +309,12 @@ with open(sged_file) as csv_file:
                     res_id = (" ", int(pos), insert_code)
                     if not res_id in chain:
                         res_id = (
-                            "H_%s" % states[j],
+                            "H_%s" % state,
                             int(pos),
                             insert_code,
                         )  # Try with HETATM
 
-                    if chain[res_id].resname == states[j]:
+                    if chain[res_id].resname == state:
                         if "CA" in chain[res_id]:
                             calphas.append(chain[res_id]["CA"])
                         else:
@@ -283,12 +356,20 @@ with open(sged_file) as csv_file:
                 res_sel = tmp.split(";")
                 # Ignore missing data:
                 res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                positions = [x[3:] for x in res_sel_cleaned]
-                states = [x[:3] for x in res_sel_cleaned]
-                num_contact1 = [0 for x in positions]
-                num_contact2 = [0 for x in positions]
-                num_contact3 = [0 for x in positions]
-                for j, pos in enumerate(positions):
+                #positions = [x[3:] for x in res_sel_cleaned]
+                #states = [x[:3] for x in res_sel_cleaned]
+                num_contact1 = [0 for x in res_sel_cleaned]
+                num_contact2 = [0 for x in res_sel_cleaned]
+                num_contact3 = [0 for x in res_sel_cleaned]
+                for j, pos in enumerate(res_sel_cleaned):
+                    s = pos.split(":") # Assuming format Chain:Residue
+                    if len(s) != 2:
+                        print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                        exit(-1)
+                    chain_sel = s[0]
+                    pos = s[1][3:]
+                    state = s[1][:3]
+                    chain = model[chain_sel]
                     insert_code = " "
                     try:
                         int(pos)
@@ -301,12 +382,12 @@ with open(sged_file) as csv_file:
                     res_id = (" ", int(pos), insert_code)
                     if not res_id in chain:
                         res_id = (
-                            "H_%s" % states[j],
+                            "H_%s" % state,
                             int(pos),
                             insert_code,
                         )  # Try with HETATM
 
-                    if chain[res_id].resname == states[j]:
+                    if chain[res_id].resname == state:
                         # Compute distance of this residue with all others in the structure:
                         for search_chain in model:
                             for search_res in search_chain:
@@ -360,7 +441,7 @@ with open(sged_file) as csv_file:
             results_rsa_mea = [numpy.nan for x in groups]
 
             try:
-                dssp = DSSP(model, pdb_file2)
+                dssp = DSSP(model, pdb_file2, dssp = dssp_exe)
 
                 for i, g in enumerate(groups):
                     tmp = g[1 : (len(g) - 1)]
@@ -368,11 +449,19 @@ with open(sged_file) as csv_file:
                     res_sel = tmp.split(";")
                     # Ignore missing data:
                     res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                    positions = [x[3:] for x in res_sel_cleaned]
-                    states = [x[0:3] for x in res_sel_cleaned]
-                    motifs = [numpy.nan for x in positions]
-                    rsa = [numpy.nan for x in positions]
-                    for j, pos in enumerate(positions):
+                    #positions = [x[3:] for x in res_sel_cleaned]
+                    #states = [x[0:3] for x in res_sel_cleaned]
+                    motifs = [numpy.nan for x in res_sel_cleaned]
+                    rsa = [numpy.nan for x in res_sel_cleaned]
+                    for j, pos in enumerate(res_sel_cleaned):
+                        s = pos.split(":") # Assuming format Chain:Residue
+                        if len(s) != 2:
+                            print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                            exit(-1)
+                        chain_sel = s[0]
+                        pos = s[1][3:]
+                        state = s[1][:3]
+                        chain = model[chain_sel]
                         insert_code = " "
                         try:
                             int(pos)
@@ -384,7 +473,7 @@ with open(sged_file) as csv_file:
                             pos = pos[: (n - 1)]
                         if (chain_sel, (" ", int(pos), insert_code)) in dssp:
                             res = dssp[(chain_sel, (" ", int(pos), insert_code))]
-                            states_res = states[j].title()
+                            states_res = state.title()
                             if states_res in IUPACData.protein_letters_3to1:
                                 letter = IUPACData.protein_letters_3to1[states_res]
                             else:
@@ -451,7 +540,7 @@ with open(sged_file) as csv_file:
             results_rsa = [numpy.nan for x in groups]
 
             try:
-                dssp = DSSP(model, pdb_file2)
+                dssp = DSSP(model, pdb_file2, dssp = dssp_exe)
 
                 for i, g in enumerate(groups):
                     tmp = g[1 : (len(g) - 1)]
@@ -459,11 +548,19 @@ with open(sged_file) as csv_file:
                     res_sel = tmp.split(";")
                     # Ignore missing data:
                     res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                    positions = [x[3:] for x in res_sel_cleaned]
-                    states = [x[0:3] for x in res_sel_cleaned]
-                    motifs = [numpy.nan for x in positions]
-                    rsa = [numpy.nan for x in positions]
-                    for j, pos in enumerate(positions):
+                    #positions = [x[3:] for x in res_sel_cleaned]
+                    #states = [x[0:3] for x in res_sel_cleaned]
+                    motifs = [numpy.nan for x in res_sel_cleaned]
+                    rsa = [numpy.nan for x in res_sel_cleaned]
+                    for j, pos in enumerate(res_sel_cleaned):
+                        s = pos.split(":") # Assuming format Chain:Residue
+                        if len(s) != 2:
+                            print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                            exit(-1)
+                        chain_sel = s[0]
+                        pos = s[1][3:]
+                        state = s[1][:3]
+                        chain = model[chain_sel]
                         insert_code = " "
                         try:
                             int(pos)
@@ -475,7 +572,7 @@ with open(sged_file) as csv_file:
                             pos = pos[: (n - 1)]
                         if (chain_sel, (" ", int(pos), insert_code)) in dssp:
                             res = dssp[(chain_sel, (" ", int(pos), insert_code))]
-                            states_res = states[j].title()
+                            states_res = state.title()
                             if states_res in IUPACData.protein_letters_3to1:
                                 letter = IUPACData.protein_letters_3to1[states_res]
                             else:
@@ -518,10 +615,17 @@ with open(sged_file) as csv_file:
                     res_sel = tmp.split(";")
                     # Ignore missing data:
                     res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                    positions = [x[3:] for x in res_sel_cleaned]
+                    #positions = [x[3:] for x in res_sel_cleaned]
                     res_depth = [numpy.nan for x in res_sel_cleaned]
                     ca_depth = [numpy.nan for x in res_sel_cleaned]
-                    for j, pos in enumerate(positions):
+                    for j, pos in enumerate(res_sel_cleaned):
+                        s = pos.split(":") # Assuming format Chain:Residue
+                        if len(s) != 2:
+                            print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                            exit(-1)
+                        chain_sel = s[0]
+                        pos = s[1][3:]
+                        chain = model[chain_sel]
                         insert_code = " "
                         try:
                             int(pos)
@@ -610,7 +714,11 @@ with open(sged_file) as csv_file:
                             "ERROR! Chain attribute of start and end positions should be identical in beta-sheet element %i. This strand annotation will be ignored."
                             % i
                         )
-                    elif sta_cha[i] == chain_sel:
+                    else:
+                        chain_sel = sta_cha[i]
+                        chain = model[chain_sel]
+                        if not chain_sel in struct_index:
+                            struct_index[chain_sel] = dict()
                         s = [
                             chain[x] if x in chain else None
                             for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)
@@ -618,10 +726,10 @@ with open(sged_file) as csv_file:
                         s = list(filter(None, s))
                         for residue in s:
                             res = residue.get_resname().upper()
-                            letter = SCOPData.protein_letters_3to1[res]
+                            letter = PDBData.protein_letters_3to1_extended[res]
                             if not letter in Polypeptide.d1_to_index:
                                 letter = "X"
-                            struct_index[
+                            struct_index[chain_sel][
                                 "%s%s"
                                 % (residue.get_resname(), res_to_str(residue.get_id()))
                             ] = "%s-%s" % (sheet_id[i], range_id[i])
@@ -671,7 +779,11 @@ with open(sged_file) as csv_file:
                             "ERROR! Chain attribute of start and end positions should be identical in helix element %i. This helix annotation is ignored."
                             % i
                         )
-                    elif sta_cha[i] == chain_sel:
+                    else:
+                        chain_sel = sta_cha[i]
+                        chain = model[chain_sel]
+                        if not chain_sel in struct_index:
+                            struct_index[chain_sel] = dict()
                         s = [
                             chain[x] if x in chain else None
                             for x in range(int(sta_pos[i]), int(end_pos[i]) + 1)
@@ -679,10 +791,10 @@ with open(sged_file) as csv_file:
                         s = list(filter(None, s))
                         for residue in s:
                             res = residue.get_resname().upper()
-                            letter = SCOPData.protein_letters_3to1[res]
+                            letter = PDBData.protein_letters_3to1_extended[res]
                             if not letter in Polypeptide.d1_to_index:
                                 letter = "X"
-                            struct_index[
+                            struct_index[chain_sel][
                                 "%s%s"
                                 % (residue.get_resname(), res_to_str(residue.get_id()))
                             ] = "%s-%s" % (helix_id[i], sconf_id[i])
@@ -695,13 +807,21 @@ with open(sged_file) as csv_file:
                 res_sel = tmp.split(";")
                 group_labels = ["NA" for x in res_sel]
                 for j, site in enumerate(res_sel):
-                    if site in struct_index:
-                        group_labels[j] = struct_index[site]
+                    s = site.split(":") # Assuming format Chain:Residue
+                    if len(s) != 2:
+                        print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                        exit(-1)
+                    chain_sel = s[0]
+                    site = s[1]
+                    chain = model[chain_sel]
+                    if chain_sel in struct_index:
+                        if site in struct_index[chain_sel]:
+                            group_labels[j] = struct_index[chain_sel][site]
                 results_labels[i] = "[%s]" % (";".join(group_labels))
 
             df["SecondaryStructureLabels"] = results_labels
 
     # Write results:
-    df.to_csv(output_file, sep=delim, na_rep="NA", index=False)
+    df.to_csv(output_file, sep = delim, na_rep = "NA", index = False)
 
 print("Done.")
