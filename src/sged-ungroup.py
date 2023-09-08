@@ -20,6 +20,9 @@ def usage() :
 """
 sged-ungroup
 
+    Convert multi-sites groups into single sites groups. 
+    Allow to specify which column to replicate.
+
 Available arguments:
     --sged (-s): Input SGED file (required).
     --output (-o): Output SGED file (required).

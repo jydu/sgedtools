@@ -19,7 +19,7 @@ def usage() :
 """
 sged-translate-coords
 
-Translate coordinates using an index.
+    Translate coordinates using an index.
 
 Available arguments:
     --sged (-s): Input SGED file (required).

@@ -37,8 +37,8 @@ def usage() :
 """
 sged-create-structure-index
 
-Create a structure index for an alignment. Align each sequence to all chains of one or more
-input structures and find the best match.
+    Create a structure index for an alignment. Align each sequence to all chains of one 
+    or more input structures and find the best match.
 
 Available arguments:
     --pdb (-p): Input protein data bank file (required).
