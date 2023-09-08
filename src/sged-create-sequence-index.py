@@ -19,7 +19,10 @@ full_opt = ["alignment=", "reference=", "output=", "format=", "help"]
 def usage() :
     print(
 """
-sged-ungroup
+sged-create-sequence-index
+
+    Create a sequence index, translating alignment positions into
+    a given sequence's coordinates.
 
 Available arguments:
     --alignment (-a): Input alignment file (required);

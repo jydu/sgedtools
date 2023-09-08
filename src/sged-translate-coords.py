@@ -62,7 +62,6 @@ for arg, val in arguments:
     elif arg in ("-h", "--help"):
         usage()
 
-
 if tabsep:
     print("SGED file is in TSV format.")
     delim = "\t"
@@ -71,11 +70,15 @@ else:
     delim = ","
 
 # Check required arguments
+
 if not 'sged_file' in globals():
+    print("Error: a SGED input file should be specified.")
     usage()
 if not 'index_file' in globals():
+    print("Error: an index file should be specified.")
     usage()
 if not 'output_file' in globals():
+    print("Error: an ouput file should be specified.")
     usage()
 
 index_col = 0
@@ -84,6 +87,7 @@ if reversed_index:
     index_col = 1
 
 # Get index:
+
 index = pandas.read_csv(
     open(index_file), sep=",", comment="#", dtype=str, index_col=index_col
 )

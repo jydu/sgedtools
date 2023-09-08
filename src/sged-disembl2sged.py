@@ -10,8 +10,26 @@ import getopt, sys
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "d:o:c"
-full_opt = ["disembl=", "output=", "csv"]
+unix_opt = "d:o:ch"
+full_opt = ["disembl=", "output=", "csv", "help"]
+
+def usage() :
+    print(
+"""
+sged-disembl2sged
+
+    Convert the output of the DISEMBL program to predict intrinsically disordered regions
+    into SGED format.
+
+Available arguments:
+    --disembl (-d): Input DISEMBL file (required).
+    --output (-o): Output SGED file (required).
+    --csv (-c): Input SGED file is with comas instead of tabs (default: tabs).
+    --help (-h): Print this message.
+"""
+    )
+    sys.exit()
+
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -29,6 +47,8 @@ for arg, val in arguments:
         print("Output SGED file: %s" % output_file)
     elif arg in ("-c", "--csv"):
         tabsep = ","
+    elif arg in ("-h", "--help"):
+        usage()
 
 if tabsep:
     print("SGED file is in TSV format")
@@ -36,6 +56,15 @@ if tabsep:
 else:
     print("SGED file is in CSV format")
     delim = ","
+
+# Check required arguments
+
+if not 'disembl_file' in globals():
+    print("Error: a DISEMBL input file should be specified.")
+    usage()
+if not 'output_file' in globals():
+    print("Error: an ouput file should be specified.")
+    usage()
 
 # Start parsing:
 
@@ -55,3 +84,5 @@ with open(disembl_file, "r") as scores:
             cols = line.split("\t")
             output.write(tabsep.join(["[%s]" % i, cols[0], cols[1], cols[2], cols[3]]))
             output.write("\n")
+
+print("Done.")
