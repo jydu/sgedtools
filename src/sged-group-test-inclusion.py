@@ -2,7 +2,7 @@
 
 """ Created on 21/08/20 by jdutheil
 
-    Test if groups in one SGED file are include in ones from a second file.
+    Check if groups in one SGED file are present in a second file.
 """
 
 import getopt, sys
@@ -11,7 +11,7 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:t:o:g:h:r:c"
+unix_opt = "s:t:o:g:k:r:ch"
 full_opt = [
     "sged1=",
     "sged2=",
@@ -21,7 +21,30 @@ full_opt = [
     "group2=",
     "result=",
     "csv",
+    "help"
 ]
+
+def usage() :
+    print(
+"""
+sged-group-test-inclusion
+
+    Check if groups in one SGED file are present in a second file.
+
+Available arguments:
+    --sged1 (-s): Query SGED file (required).
+    --sged2 (-t): Test SGED file (required).
+    --group/--group1 (-g): Column where group coordinates are stored (default: Group).
+    --group2 (-k): Column where group coordinates are stored in the test file,
+        if different from the query file (default: Group).
+    --output (-o): Output SGED file (required).
+    --result (-r): Column where to store test results (required).
+    --csv (-c): Input SGED file is with comas instead of tabs (default: tabs).
+    --help (-h): Print this message.
+"""
+    )
+    sys.exit()
+
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -49,7 +72,7 @@ for arg, val in arguments:
     ):  # Note: if only this arg is passed, group col name is assumed to be identical in both files
         group_col1 = val
         print("Coordinates are in column: %s" % group_col1)
-    elif arg in ("-h", "--group2"):
+    elif arg in ("-k", "--group2"):
         group_col2 = val
         print("Coordinates for second file are in column: %s" % group_col2)
     elif arg in ("-r", "--result"):
@@ -64,6 +87,18 @@ if tabsep:
 else:
     print("SGED file is in CSV format")
     delim = ","
+
+# Check required arguments
+
+if not 'sged_file1' in globals():
+    print("Error: a query SGED input file should be specified.")
+    usage()
+if not 'sged_file2' in globals():
+    print("Error: a test SGED input file should be specified.")
+    usage()
+if not 'output_file' in globals():
+    print("Error: an ouput file should be specified.")
+    usage()
 
 # Function that tests how two groups ovelap.
 # Groups are provided as strings ([1;2;3]).
@@ -84,9 +119,9 @@ def compare_groups(group1, group2):
 
 # Start parsing
 with open(sged_file1) as csv_file1:
-    df1 = pandas.read_csv(csv_file1, sep=delim, dtype=str, comment="#")
+    df1 = pandas.read_csv(csv_file1, sep = delim, dtype = str, comment = "#")
 with open(sged_file2) as csv_file2:
-    df2 = pandas.read_csv(csv_file2, sep=delim, dtype=str, comment="#")
+    df2 = pandas.read_csv(csv_file2, sep = delim, dtype = str, comment = "#")
 
 inc_test = [None] * len(df1)
 test_groups = df2[group_col2].tolist()
@@ -107,6 +142,6 @@ for i in range(len(df1)):
 df1[result_col] = inc_test
 
 # Write results:
-df1.to_csv(output_file, sep=delim, na_rep="NA", index=False)
+df1.to_csv(output_file, sep = delim, na_rep = "NA", index = False)
 
 print("Done.")
