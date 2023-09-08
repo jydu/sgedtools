@@ -188,7 +188,7 @@ name group12 /A:50,137,52,139,481 /B:119,157,107,114,153
 
 We plot group 11 as an example:
 
-``
+```
 hide all
 ribbon /A /B /C
 color /A /B /C bychain
