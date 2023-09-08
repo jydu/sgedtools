@@ -11,8 +11,26 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:t:o:g:h:j:c"
-full_opt = ["sged=", "output=", "group=", "csv"]
+unix_opt = "s:t:o:g:h:j:ch"
+full_opt = ["sged=", "output=", "group=", "csv", "help"]
+
+def usage() :
+    print(
+"""
+sged-get-all-pairs
+
+    Take the groups in a SGED files and combine them in pairs.
+
+Available arguments:
+    --sged (-s): Input SGED file (required).
+    --group (-g): Column where group coordinates are stored (default: Group).
+    --output (-o): Output SGED file (required).
+    --csv (-c): Input SGED file is with comas instead of tabs (default: tabs).
+    --help (-h): Print this message.
+"""
+    )
+    sys.exit()
+
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -21,7 +39,6 @@ except getopt.error as err:
 
 tabsep = True  # TSV by default
 group_col = "Group"
-join_type = "outer"
 for arg, val in arguments:
     if arg in ("-s", "--sged"):
         sged_file = val
@@ -34,6 +51,8 @@ for arg, val in arguments:
         print("Coordinates are in column: %s" % group_col)
     elif arg in ("-c", "--csv"):
         tabsep = False
+    elif arg in ("-h", "--help"):
+        usage()
 
 if tabsep:
     print("SGED file is in TSV format")
@@ -42,9 +61,19 @@ else:
     print("SGED file is in CSV format")
     delim = ","
 
+# Check required arguments
+
+if not 'sged_file' in globals():
+    print("Error: a SGED input file should be specified.")
+    usage()
+if not 'output_file' in globals():
+    print("Error: an ouput file should be specified.")
+    usage()
+
 # Start parsing
+
 with open(sged_file) as csv_file:
-    df = pandas.read_csv(csv_file, sep=delim, dtype=str, comment="#")
+    df = pandas.read_csv(csv_file, sep = delim, dtype = str, comment = "#")
 
 newgroups = []
 for i in range(len(df) - 1):
@@ -56,6 +85,6 @@ for i in range(len(df) - 1):
 newdf = pandas.DataFrame({group_col: newgroups})
 
 # Write results:
-newdf.to_csv(output_file, sep=delim, na_rep="NA", index=False)
+newdf.to_csv(output_file, sep = delim, na_rep = "NA", index = False)
 
 print("Done.")
