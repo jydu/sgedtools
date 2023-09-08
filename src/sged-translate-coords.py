@@ -11,8 +11,8 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:g:o:i:n:rc"
-full_opt = ["sged=", "group-=", "output=", "index=", "name=", "reverse", "csv"]
+unix_opt = "s:g:o:i:n:rch"
+full_opt = ["sged=", "group-=", "output=", "index=", "name=", "reverse", "csv", "help"]
 
 def usage() :
     print(

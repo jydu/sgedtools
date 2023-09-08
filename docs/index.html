@@ -159,6 +159,32 @@ body, html {
     <h5 class="w3-center w3-padding-48"><span class="w3-tag w3-wide">Using SgedTools</span></h5>
   
     <p>Each program in the SgedTools package takes as input one or several arguments, which can be listed by running the program:</p>
+
+    <pre><code>
+&gt;python3 sged-create-structure-index.py -h
+
+sged-create-structure-index
+
+Create a structure index for an alignment. Align each sequence to all chains of one or more
+input structures and find the best match.
+
+Available arguments:
+    --pdb (-p): Input protein data bank file (required).
+        Can be used multiple times to selected several entries.
+        File globs can be used to select multiple files.
+    --pdb-format (-f): Format of the protein data bank file (default: PDB).
+        Either PDB or mmCif is supported. In addition, remote:PDB or remote:mmCif
+        allow to directly download the structure file from the Protein Data Bank.
+        In this case, --pdb-id indicates the PDB id.
+    --pdb-id (-i): Specify the id of the PDB file to retrieve remotely.
+    --alignment (-a): Input alignment file (required);
+    --alignment-format (-g): Input alignment format (default: fasta).
+        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO).
+    --output (-o): Output index file (required).
+    --exclude-incomplete (-x): Exclude incomplete chains from scan (default: false).
+    --help (-h): Print this message.
+    </code></pre>
+    
   </div>
 </div>
 

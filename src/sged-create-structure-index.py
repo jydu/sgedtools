@@ -20,7 +20,7 @@ aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:i:f:a:g:o:x"
+unix_opt = "p:i:f:a:g:o:xh"
 full_opt = [
     "pdb=",
     "pdb-id=",
@@ -29,12 +29,16 @@ full_opt = [
     "alignment-format=",
     "output=",
     "exclude-incomplete",
+    "help"
 ]
 
 def usage() :
     print(
 """
 sged-create-structure-index
+
+Create a structure index for an alignment. Align each sequence to all chains of one or more
+input structures and find the best match.
 
 Available arguments:
     --pdb (-p): Input protein data bank file (required).
