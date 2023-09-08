@@ -80,6 +80,8 @@ for arg, val in arguments:
         print("Results of inclusion test are in column: %s" % result_col)
     elif arg in ("-c", "--csv"):
         tabsep = False
+    elif arg in ("-h", "--help"):
+        usage()
 
 if tabsep:
     print("SGED file is in TSV format")
