@@ -28,7 +28,7 @@ Available arguments:
         Indicates which column should be added to the output file.
         Entries in the input file for the selected columns will be 
         duplicated in each entry in the output file.
-    --csv (-c): Input SGED file is with comas instead of tabs (default).
+    --csv (-c): Input SGED file is with comas instead of tabs (default: tabs).
     --help (-h): Print this message.
 """
     )
@@ -52,7 +52,7 @@ for arg, val in arguments:
         print("Output ungrouped file: %s" % output_file)
     elif arg in ("-d", "--data"):
         selected_cols = val.split(",")
-    elif arg in ("-g", "--groups"):
+    elif arg in ("-g", "--group"):
         group_col = val
         print("Group coordinates are in column: %s" % group_col)
     elif arg in ("-c", "--csv"):

@@ -11,8 +11,29 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:o:i:n:rc"
-full_opt = ["sged=", "output=", "index=", "name=", "reverse", "csv"]
+unix_opt = "s:g:o:i:n:rc"
+full_opt = ["sged=", "group-=", "output=", "index=", "name=", "reverse", "csv"]
+
+def usage() :
+    print(
+"""
+sged-translate-coords
+
+Translate coordinates using an index.
+
+Available arguments:
+    --sged (-s): Input SGED file (required).
+    --group (-g): Column where group coordinates are stored (default: Group).
+    --index (-i): Index file to use for translation (required).
+    --name (-n): Column name for the translated coordinates (default: TlnGroup).
+    --reverse (-r): Reverse the index.
+    --csv (-c): Input SGED file is with comas instead of tabs (default: tabs).
+    --output (-o): Output SGED file (required).
+    --help (-h): Print this message.
+"""
+    )
+    sys.exit()
+
 try:
     arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
@@ -20,6 +41,8 @@ except getopt.error as err:
     sys.exit(2)
 
 tabsep = True  # TSV by default
+group_col = "Group"
+tln_name = "TlnGroup"
 reversed_index = False  # Tells if the index is inverted (second column is the key, the first one being the value). Works only if the index has 1:1 matches.
 for arg, val in arguments:
     if arg in ("-s", "--sged"):
@@ -36,6 +59,8 @@ for arg, val in arguments:
         reversed_index = True
     elif arg in ("-c", "--csv"):
         tabsep = False
+    elif arg in ("-h", "--help"):
+        usage()
 
 
 if tabsep:
@@ -44,6 +69,14 @@ if tabsep:
 else:
     print("SGED file is in CSV format.")
     delim = ","
+
+# Check required arguments
+if not 'sged_file' in globals():
+    usage()
+if not 'index_file' in globals():
+    usage()
+if not 'output_file' in globals():
+    usage()
 
 index_col = 0
 if reversed_index:
@@ -73,7 +106,7 @@ with open(sged_file) as csv_file:
             tmp = tmp.replace(" ", "")
             positions = tmp.split(";")
             translations = [
-                index.loc[x][0] if x in index.index else "NA" for x in positions
+                index.loc[x].iloc[0] if x in index.index else "NA" for x in positions
             ]
             tln_group = "[%s]" % ";".join(translations)
             handle.write(
