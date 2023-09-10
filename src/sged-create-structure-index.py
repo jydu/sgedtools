@@ -118,7 +118,7 @@ print("Parsing structure(s)...")
 if pdb_format.startswith("remote:"):
     remote_format = pdb_format[7:]
     pdb_server = PDBList(
-        server="ftp://ftp.wwpdb.org", pdb=None, obsolete_pdb=False, verbose=True
+        server="ftp://ftp.wwpdb.org", pdb = None, obsolete_pdb = False, verbose = True
     )
     pdb_format = remote_format
 

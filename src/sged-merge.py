@@ -83,8 +83,8 @@ for arg, val in arguments:
         print("Join type: %s" % join_type)
     elif arg in ("-c", "--csv"):
         tabsep = False
-    elif arg in ("-c", "--csv"):
-        tabsep = False
+    elif arg in ("-h", "--help"):
+        usage()
 
 if tabsep:
     print("SGED file is in TSV format")

@@ -169,7 +169,7 @@ python3 ../../src/sged-translate-coords.py \
          --output coxall_predictions_pvalues_tln.sged
 ```
 
-We can then use the results to visualize the results, for instance using the [https://www.rbvi.ucsf.edu/chimerax/](ChimeraX) program:
+We can then visualize the results, for instance using the [https://www.rbvi.ucsf.edu/chimerax/](ChimeraX) program:
 
 ```
 name group1 /B:45,87,99
