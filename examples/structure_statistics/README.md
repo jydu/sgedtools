@@ -1,4 +1,4 @@
-Analyse the coevolving groups from family HOG000003295. This example data set is taken from [Chaurasia and Dutheil, 2022][1].
+Analyse the coevolving groups from family HOG000003295. This example data set is taken from [Chaurasia and Dutheil, 2022][[1]].
 
 ## Create a structure index
 
