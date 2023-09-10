@@ -1,4 +1,4 @@
-Analyse the coevolving groups from family HOG000003295.
+Analyse the coevolving groups from family HOG000003295. This example data set is taken from [Chaurasia and Dutheil, 2022][1].
 
 ## Create a structure index
 
@@ -315,9 +315,11 @@ p <- ggarrange(h1, h2, labels = c("A", "B"))
 ggsave(p, filename = "Randomization2.png", width = 8, height = 4)
 ```
 
-![](Randomization1.png)
+![](Randomization2.png)
 
 The results are no longer significant. The proximity and exposure of the coevolving sites may be a by-product of their fast evolutionary rate.
 
+[1]: Chaurasia S and Dutheil JY. The Structural Determinants of Intra-Protein Compensatory Substitutions 
+Molecular Biology and Evolution, 39(4): msac063, [https://doi.org/10.1093/molbev/msac063](https://doi.org/10.1093/molbev/msac063).
 
 
