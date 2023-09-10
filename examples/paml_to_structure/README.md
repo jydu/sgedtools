@@ -165,19 +165,19 @@ save /path/to/final.pdb, selection=my_residues
 Comput Appl Biosci. 1997 Oct;13(5):555-6. doi: 10.1093/bioinformatics/13.5.555. 
 PMID: 9367129.
 
-[^2]: Messier, W., Stewart, CB. Episodic adaptive evolution of primate lysozymes. 
+[^2]: Messier W and Stewart CB. Episodic adaptive evolution of primate lysozymes. 
 Nature 385, 151–154 (1997). https://doi.org/10.1038/385151a0
 
-[^3]: Ziheng Yang, Rasmus Nielsen, Codon-Substitution Models for Detecting Molecular Adaptation
+[^3]: Yang Z and Nielsen R. Codon-Substitution Models for Detecting Molecular Adaptation
 at Individual Sites Along Specific Lineages, Molecular Biology and Evolution, Volume 19, 
 Issue 6, June 2002, Pages 908–917
 
-[^4]: Ziheng Yang, Wendy S.W. Wong, Rasmus Nielsen, Bayes Empirical Bayes Inference of Amino Acid 
+[^4]: Yang Z, Wong WSW, and Nielsen R. Bayes Empirical Bayes Inference of Amino Acid 
 Sites Under Positive Selection, Molecular Biology and Evolution, Volume 22, Issue 4, April 2005, 
 Pages 1107–1118
 
-[^5]: Kumar S, Stecher G, Tamura K. MEGA7: Molecular Evolutionary Genetics Analysis Version 7.0 for Bigger Datasets.
+[^5]: Kumar S, Stecher G, and Tamura K. MEGA7: Molecular Evolutionary Genetics Analysis Version 7.0 for Bigger Datasets.
  Mol Biol Evol. 2016 Jul;33(7):1870-4. doi: 10.1093/molbev/msw054. Epub 2016 Mar 22. PMID: 27004904; PMCID: PMC8210823.
  
- [^6]: Schrödinger, L., & DeLano, W. (2020). PyMOL. Retrieved from http://www.pymol.org/pymol
+[^6]: Schrödinger L and DeLano, W. (2020). PyMOL. Retrieved from http://www.pymol.org/pymol
  
