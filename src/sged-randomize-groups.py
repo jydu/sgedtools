@@ -11,6 +11,7 @@
 import getopt, sys, os.path, warnings
 import pandas
 import numpy
+from progress.bar import Bar
 
 # For convenience
 def ifelse_fun(test, yes, no):
@@ -179,6 +180,7 @@ x_siz = numpy.zeros(n_groups * n_rep, dtype = numpy.uint32)
 x_oav = numpy.zeros(n_groups * n_rep)  # Average the original group
 
 i = 0
+pbar = Bar("Simulating...", max = n_groups)
 for grp in range(n_groups):
     size = groups_sizes[grp]
     print("Simulating for group %i with size %i\n" % (grp + 1, size))
@@ -266,6 +268,7 @@ for grp in range(n_groups):
             x_grp[j] = x_grp[j] + "]"
 
     i = i + n_rep
+    pbar.next()
 
 if cond_var != "":
     x_ave = x_ave / x_siz
@@ -293,4 +296,4 @@ else:
 # Write results:
 df.to_csv(output_file, sep = delim, na_rep = "NA", index = False)
 
-print("Done.")
+print("\nDone.")

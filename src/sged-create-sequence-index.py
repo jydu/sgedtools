@@ -14,7 +14,7 @@ cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
 unix_opt = "a:r:o:f:h"
-full_opt = ["alignment=", "reference=", "output=", "format=", "help"]
+full_opt = ["alignment=", "reference=", "output=", "alignment-format=", "help"]
 
 def usage() :
     print(
@@ -49,7 +49,7 @@ for arg, val in arguments:
     elif arg in ("-r", "--reference"):
         ref_seq = val
         print("Output reference sequence: %s" % ref_seq)
-    elif arg in ("-f", "--format"):
+    elif arg in ("-f", "--alignment-format"):
         aln_format = val
         print("Input alignment format: %s" % aln_format)
     elif arg in ("-o", "--output"):

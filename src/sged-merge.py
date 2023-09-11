@@ -34,8 +34,9 @@ sged-merge
 Available arguments:
     --sged1 (-s): First SGED file (required).
     --sged2 (-t): Second SGED file (required).
-    --group/--group1 (-g): Column where group coordinates are stored (default: Group).
-    --group2 (-k): Column where group coordinates are stored in the second file,
+    --group/--group1 (-g): List of columns to use for merging 
+        (one or several values separated by comas, default: Group).
+    --group2 (-k): List of columns to use for merging for the second file,
         if different from the first file (default: Group).
     --output (-o): Output SGED file (required).
     --join (-j): Join type to use for merging (default: outer).
@@ -74,10 +75,10 @@ for arg, val in arguments:
     ):  # Note: if only this arg is passed, group col name is assumed to be identical in both files
         group_col1 = val.split(",")
         group_col2 = val.split(",")
-        print("Coordinates are in column: %s" % group_col1)
+        print("Columns to use for merging: %s" % group_col1)
     elif arg in ("-k", "--group2"):
         group_col2 = val.split(",")
-        print("Coordinates for second file are in column: %s" % group_col2)
+        print("Columns to use for merging for second file: %s" % group_col2)
     elif arg in ("-j", "--join"):
         join_type = val
         print("Join type: %s" % join_type)
