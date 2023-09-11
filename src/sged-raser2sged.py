@@ -3,17 +3,44 @@ import sys, getopt
 import pandas as pd
 from Bio import SeqIO
 
+""" Created on 23/05/23 by BasilePajot
+
+    Converts the output of RASER rate shift detection to SGED.
+"""
+
 # Variable input.
+
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "r:a:f:o:c"
+unix_opt = "r:a:f:o:ch"
 full_opt = ["raser=",
-            "alignment",
-            "alignment-format",
+            "alignment=",
+            "alignment-format=",
             "output=", 
             "csv",
+            "help"
             ]
+
+def usage() :
+    print(
+"""
+sged-raser2sged
+
+    Converts the output of RASER rate shift detection to SGED.
+    Output coordinates according to the original alignment position.
+
+Available arguments:
+    --raser (-t): RASER output file (required).
+    --alignment (-a): RASER input alignment file (required).
+    --alignment-format (-f): Input alignment format (default: fasta).
+        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO).
+    --output (-o): Output SGED file (required).
+    --csv (-c): Input SGED file is with comas instead of tabs (default)
+    --help (-h): Print this message.
+"""
+    )
+    sys.exit()
 
 
 try:
@@ -25,7 +52,6 @@ except getopt.error as err:
 # TSV by default
 tabseq = True
 aln_format = "fasta"
-aln_file = ""
 for arg, val in arguments:
     if arg in ("-r", "--raser"):
         raser_file = val
@@ -41,6 +67,8 @@ for arg, val in arguments:
         print("Output SGED file: %s" % output_file)
     elif arg in ("-c", "--csv"):
         tabseq = False
+    elif arg in ("-h", "--help"):
+        usage()
 
 if tabseq:
     print("SGED file is in TSV format.")
@@ -49,10 +77,17 @@ else:
     print("SGED file is in CSV format.")
     delim = ","
 
-# Check option
-if aln_file == "":
-    print("An alignment file should be provided.")
-    exit(-1)
+# Check required arguments
+
+if not 'raser_file' in globals():
+    print("Error: an input RASER file must be specified.")
+    usage()
+if not 'aln_file' in globals():
+    print("Error: an input alignment file must be specified.")
+    usage()
+if not 'output_file' in globals():
+    print("Error: an output SGED file must be specified.")
+    usage()
 
 
 # Read the raser file
@@ -79,7 +114,7 @@ for line in contents:
     if line.count("\t") > number_cols:
         number_cols = line.count("\t")
 
-number_cols+=1  
+number_cols += 1  
 
 if number_cols == 3:
     raser_df = pd.DataFrame(positive_sites, columns=["position", "amino_acid", "probability"])  
@@ -96,11 +131,12 @@ else:
         raser_df["Proba > 0.95"][counter] = param[1].replace("\n", "")
 
 # Align the sequences from the alignment file and the raser output.
+
 raser_aa = raser_df["amino_acid"]
 raser_df.drop(["amino_acid", "position"], axis=1, inplace=True)
 
-to_write=[]
-counter=0
+to_write = []
+counter = 0
 for i, aa in enumerate(ref_seq):
      if aa == "-":
              to_write.append(["["+str(i)+"]", aa]+["NA" for _ in range(raser_df.shape[1])])
@@ -109,12 +145,16 @@ for i, aa in enumerate(ref_seq):
              counter+=1
 
 # Put the output in a dataframe
+
 if number_cols == 3:
-    df = pd.DataFrame(to_write, columns=["Group", "amino_acid", "probability"])
+    df = pd.DataFrame(to_write, columns = ["Group", "amino_acid", "probability"])
 else:
-    df = pd.DataFrame(to_write, columns=["Group", "amino_acid", "probability", "Proba>0.95"])
+    df = pd.DataFrame(to_write, columns = ["Group", "amino_acid", "probability", "Proba>0.95"])
 
 
 # Export to csv
-df.to_csv(output_file, index=False, sep=delim)
+
+df.to_csv(output_file, index = False, sep = delim)
+
 print("Done.")
+

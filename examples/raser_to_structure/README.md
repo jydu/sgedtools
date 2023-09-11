@@ -4,26 +4,24 @@ The RAte Shift EstimatoR [RASER](https://www.tau.ac.il/~penn/raser.html)[^1] is 
 In some cases, it can be interesting to combine this analysis with a three dimensional structure analysis of proteins to detect site-specific changes in specific protein structures. 
 Therefore, you may want to convert your RASER outputs into SGED files.
 
-To do that, there are several steps:
+To do that, there are several steps, which we illustrate with a sequence alignment of bacterial oxidoreductases. 
 
 ## Convert Raser output to an SGED file
 
-The first step is to transform the raser output file into a SGED package -readable file. It is done using the `sged-raser2sged.py` script.
+The first step is to transform the raser output file into a SGED file. It is done using the `sged-raser2sged.py` script.
 
 ```{bash}
-python3 sged-raser2sged.py \
+python3 ../../src/sged-raser2sged.py \
         -r CLU_000422_3_3_results_file.txt \
         -a CLU_000422_3_3.mase \
         -f ig \
-        -o CLU_000422_3_3_sged.csv \
-        -c
+        -o CLU_000422_3_3.sged \
 ```
-The command line arguments are:
-* '-r' or '--raser=' is the raser result file.
-* '-a' or '--alignment=' is the multiple seqeunce alignment file used to run RASER.
-* '-f' or '--alignment-fomat=' is the format of the multiple sequence alignment file. It can be any file format supported by BioSeqIO ([check here](https://biopython.org/docs/1.76/api/Bio.SeqIO.html)): CLUSTAL (.clustal, .clustalw, .aln), FASTA (.fasta, .fas, .fa, .fsa, .mpfa), NEXUS (.nexus, .nxs), IntelliGenetics (.ig, .mase), ...
-* '-o' or '--output=' is the name of the output file (SGED file)
-* '-c' or '--csv'. This argument is optional. It's use will print the output file in CSV format. The default value is TSV.
+('ig' is the python name for the Mase format.)
+The program takes two input files:
+
+* the raser result file.
+* the multiple sequence alignment file used to run RASER.
 
 This should make an output file looking like this (in TSV format): (several lines in the file)
 ```
@@ -43,70 +41,46 @@ Group   amino_acid      probability     Proba>0.95
 Once the SGED file is made, as we want to map the site-specific rate shifts onto the protein structure, we have to get the three dimensional structure of the protein. This 3D structure is given in files that can be fetched by the `sged-create-structure-index.py` program. This program can be used to find the best-matched protein structure and create a PDB index. The index is the best alignment of the chains in the protein structure file and the multiple sequence alignment. It can take several protein structure references and select the best match using two different file formats: Protein Data Bank (PDB) or macromolecular Crystallographic information file (mmCif).
 
 ```{bash}
-python3 sged-create-structure-index.py \
-        -p 5jca.pdb \
-        -p 5jfc.pdb \
-        -f PDB \
-        -a CLU_000422_3_3.mase \
-        -g ig \
-        -o CLU_000422_3_3_index.txt \ 
-        -x
-```
-The command line arguments are:
-* '-p' or '--pdb=' is the name of the PDB file. Several files can be listed using multiple '-p' arguments or a global pattern can be specified (`-p pdbfile1 -p pdbfile2 ...`). Alternatively, PDB ids can be specified when the format is set to `remote:` (see example below).
-* '-f' or '--format=' is the structure file format. It can be one of 'pdb' or 'mmCif'. If the `remote:` prefix is added, the struture files will be downloaded from the server.
-* '-a' or '--alignment=' is the multiple sequence alignment file used to run RASER on which the index should be created.
-* '-g' or '--alignment-format=' is the format of the multiple sequence alignment file. It can be any file format supported by BioSeqIO ([check here](https://biopython.org/docs/1.76/api/Bio.SeqIO.html)): CLUSTAL (.clustal, .clustalw, .aln), FASTA (.fasta, .fas, .fa, .fsa, .mpfa), NEXUS (.nexus, .nxs), IntelliGenetics (.ig, .mase), ...
-* '-o' or '--output=' is the name of the output file (index file)
-* '-x' or '--exclude-incomplete' only keeps the chain(s) with the lowest amount of incomplete data (e.g. amino acids with a missing lateral chain).
-
-The other way to do it is to fetch the PDB files corresponding to the PDB ids on a specified server. It will then chose the best-matching protein sequence according to the alignment. To do this, use the `remote:` command, like showed here.
-```{bash}
-python3 sged-create-structure-index.py \
-        -p 5JCA \
-        -p 5JFC \
+python3 ../../src/sged-create-structure-index.py \
+        -i 5JCA \
+        -i 5JFC \
         -f remote:PDB \
         -a CLU_000422_3_3.mase \
         -g ig \
-        -o CLU_000422_3_3_index.txt \ 
+        -o CLU_000422_3_3_PdbIndex.txt \ 
         -x
 ```
 
 This step should create an index file looking like this: (first 10 lines)
+
 ```
-# SGED index file version 0.99
-# SGED input alignment = ../Database_test/Archaea/CLU_000422_3_3/07-Consensus/CLU_000422_3_3.mase
+# SGED index file version 1.00
+# SGED input alignment = CLU_000422_3_3.mase
 # SGED input alignment sequence = PYRFU_1.PE1332
 # SGED input PDB = ./pdb5jca.ent
 # SGED input PDB chain = L
 # SGED index start
 AlnPos,PdbRes
 27,NA
-28,PRO2
-29,ARG3
+28,L:PRO2
+29,L:ARG3
 ...
 ```
 
 ## Coordinates translation
 
-Once the index is created, we should translate the alignemnt positions selected in the previously created SGED file into chain sites in the index using the `sged-translate-coords.py`program.
+Once the index is created, we translate the alignment positions selected in the previously created SGED file into chain sites in the index using the `sged-translate-coords.py`program.
 
 ```{bash}
-python3 sged-translate-coords.py \
-        -s CLU_000422_3_3_sged.csv \
-        -i CLU_000422_3_3_index.txt \
+python3 ../../src/sged-translate-coords.py \
+        -s CLU_000422_3_3.sged \
+        -i CLU_000422_3_3_PdbIndex.txt \
         -n PDB \
-        -o CLU_000422_3_3_translated_coords.csv \
-        -c
+        -o CLU_000422_3_3_PDB.sged
 ```
-The command line arguments are:
-* '-s' or '--sged=' is the SGED input file comming from the raser conversion.
-* '-i' or '--index=' is the index file previously created
-* '-n' or '--name=' is the column name that will be given to the PDB coordinates.
-* '-o' or '--output' is the name of the output file (translated coordinates file).
-* '-c' or '--csv'. This argument is optional. It's use will print the output file in CSV format. The default value is TSV.
 
 This should make an output file looking like this (in TSV format): (few lines)
+
 ```
 Group	PDB	amino_acid	probability	Proba>0.95
 [0]	[NA]	-	NA	NA
@@ -131,27 +105,17 @@ Group	PDB	amino_acid	probability	Proba>0.95
 The last step is to get the secondary structure information for the translated coordinates to be able to map the site specific evolutionary rate shifts. To do this, we will be using the `sged-structure-infos.py` script to calculate several informations on the 3D structure of the protein.
 
 ```{bash}
-python3 sged sged-structure-infos.py \
-        -s CLU_000422_3_3_translated_coords.csv \
-        -p 5JCA \
-        -f remote:PDB \
+python3 ../../src/sged-structure-infos.py \
+        -s CLU_000422_3_3_PDB.sged \
+        -p pdb5jca.ent \
+        -f PDB \
         -g PDB \
-        -a L \
         -m DSSP \
-        -o CLU_000422_3_3_structinfos
+        -o CLU_000422_3_3_structinfos.sged
 ```
 
-The command line arguments are:
-* '-s' or '--sged=' is the SGED input file comming from the translation of coordinates.
-* '-p' or '--pdb=' is the name of the PDB file to take as reference for the calculations. Of course, in this step too, you can use the `remote:` option just like in the previous program. The PDB reference to use is the one given in the beginning of the index file (line 4).
-* '-f' or '--pdb-format=' is the structure file format. It can be one of 'pdb' or 'mmCif'. If the `remote:` prefix is added, the struture files will be downloaded from the server.
-* '-g' or '--groups=' is the name of the column in which to get the index references from the translated coordinates file.
-* '-a' or "--chain=' is the chain to consider in the PDB reference file. In the same way as the PDB reference to use, it can be found in the beginning of the index file (line 5).
-* '-m' or '--measures=' is the names of the measures to do on the PDB file. It can be a list of the following items: **AlphaDist**, **ContactSubgraphs**, **ContactMap**, **DSSPsum**, DSSP, **ResidueDept** and SecondaryStructureLabels. (the bold measures are the ones that can only be done on groups so usually not used when converting a file from raser to a structure index. The SecondaryStructureLabels is to be used only if you have a `mmCif` reference file.). To do a list of these measures, type separate them using a comma, but no space, as shown here: `AlphaDist,DSSP,SecondaryStructureLabels`
-* '-o' or '--output=' is the name of the output file containing the information on the structures.
-* '-c' or '--csv'. This argument is optional. It's use will print the output file in CSV format. The default value is TSV. 
-
 The ouptut file should look like this: (few lines)
+
 ```
 Group	PDB	amino_acid	probability	Proba>0.95	Rsa	SecondaryStructure
 [0]	[NA]	-	NA	NA	NA	NA
@@ -164,7 +128,7 @@ Group	PDB	amino_acid	probability	Proba>0.95	Rsa	SecondaryStructure
 [7]	[NA]	-	NA	NA	NA	NA
 [8]	[NA]	-	NA	NA	NA	NA
 ...
-[29]	[ARG3]	N	0.6	NA	0.9475806451612904	-
+[29]	[ARG3]	N	0.6 NA	0.9475806451612904	-
 [30]	[LEU4]	R	0.87	NA	0.22560975609756098	-
 [31]	[ILE5]	V	0.83	NA	0.6390532544378699	-
 [32]	[LYS6]	G	0.67	NA	0.48292682926829267	-
@@ -173,9 +137,32 @@ Group	PDB	amino_acid	probability	Proba>0.95	Rsa	SecondaryStructure
 ...
 ```
 
-Once you have done this, you have the site-specific evolutionnary rate shift mapped on the 3D structure of a protein. 
+The site-specific evolutionnary rate shift are now mapped on the 3D structure of a protein. 
+We can test whether secondary structure affects the probability of rate shifts. We compare sites with a probability of rate shift above 0.99:
 
+```r
+dat <- read.table("CLU_000422_3_3_structinfos.sged", header = T)
+tbl <- table(dat$probability > 0.99, dat$SecondaryStructure)
+chisq.test(tbl, simulate.p.value = TRUE)
+```
 
+```
+> tbl
+       
+          -   B   E   G   H   I   P   S   T
+  FALSE  81   7  72  13 149   3  11  37  42
+  TRUE    1   2   4   0  12   2   0   3   4
+```
+
+```
+	Pearson's Chi-squared test with simulated p-value (based on 2000
+	replicates)
+
+data:  tbl
+X-squared = 19.67, df = NA, p-value = 0.02049
+```
+
+There is an excess of rate shifts in secondare structure motifs in general.
 
 ## Citations
 

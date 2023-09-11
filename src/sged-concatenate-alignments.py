@@ -95,8 +95,10 @@ else:
 
 # Check required arguments
 if len(aln_paths) < 2:
+    print("Error: at least two alignment files must be specified.")
     usage()
 if not 'output_aln_file' in globals():
+    print("Error: an output SGED file must be specified.")
     usage()
 
 # Start parsing

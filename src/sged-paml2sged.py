@@ -20,7 +20,7 @@ sged-paml2sged
     Converts the output of PAML positive selection test to SGED.
 
 Available arguments:
-    --paml (-): PAML output file (required).
+    --paml (-p): PAML output file (required).
     --output (-o): Output SGED file (required).
     --method (-m): Method to consider, 'bayesian' or 'naive' (default: bayesian).
     --help (-h): Print this message.
