@@ -123,7 +123,7 @@ if pdb_format.startswith("remote:"):
     pdb_format = remote_format
 
 if pdb_format.upper() == "PDB":
-    pdb_format = "PDB" #Case needs to be respected for remote access
+    pdb_format = "pdb" #Case needs to be respected for remote access
     parser = PDBParser()
 elif pdb_format.upper() == "MMCIF":
     pdb_format == "mmCif" #Case needs to be respected for remote access
