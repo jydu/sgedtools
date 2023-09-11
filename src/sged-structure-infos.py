@@ -14,18 +14,20 @@ from Bio.PDB.DSSP import DSSP
 from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from Bio.SeqUtils import *
 from Bio.Data import PDBData
+from progress.bar import Bar
 
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:p:i:f:o:m:g:d:ch"
+unix_opt = "s:p:i:f:o:m:t:g:d:ch"
 full_opt = [
     "sged=",
     "pdb=",
     "pdb-id=",
     "pdb-format=",
     "output=",
-    "measures=",
+    "measure=",
+    "threshold=",
     "group=",
     "dssp=",
     "csv",
@@ -48,6 +50,18 @@ Available arguments:
         In this case, --pdb-id indicates the PDB id.
     --pdb-id (-i): Specify the id of the PDB file to retrieve remotely.
     --group (-g): Column where group coordinates are stored (default: Group).
+    --measure (-m): Structural statistic to compute. Available measures are:
+        * Chain: list the chains present in each group.
+        * AlphaDist: 3D distance between alpha carbons of residues.
+                     Min, Max, Mean and Median for all pair within each group are reported.
+        * ContactSubgraphs: number of residues clusters based on a 3D distance threshold
+        * ContactMap: compute the number of contacts for each residue, based on a 3D distance threshold.
+        * DSSP:  DSSP measures for each site (RSA, secondary structure)
+        * DSSPsum: summary for each group of DSSP measures (RSA, secondary structure)
+        * ResidueDepth: distance to the surface of the protein.
+        * SecondaryStructureLabel: individual label of each secondary structure unit
+            (requires mmCif format as input).
+    --threshold (-t): Threshold to consider for residues to be in contact (default: 8A°).
     --output (-o): Output SGED file (required).
     --result (-r): Column where to store test results (required).
     --dssp (-d): Name of the DSSP executable (default: mkdssp).
@@ -68,6 +82,7 @@ tabsep = True  # TSV by default
 group_col = "Group"
 measures = []
 dssp_exe = "mkdssp"
+threshold = 8
 for arg, val in arguments:
     if arg in ("-s", "--sged"):
         sged_file = val
@@ -89,14 +104,15 @@ for arg, val in arguments:
     elif arg in ("-o", "--output"):
         output_file = val
         print("Output info file: %s" % output_file)
-    elif arg in ("-m", "--measures"):
-        measures = val.split(",")
+    elif arg in ("-m", "--measure"):
+        measures.append(val)
+        print("Measure to compute: %s" % val)
     elif arg in ("-g", "--group"):
         group_col = val
         print("PDB coordinates are in column: %s" % group_col)
-    elif arg in ("-a", "--chain"):
-        chain_sel = val
-        print("PDB chain to use: %s" % chain_sel)
+    elif arg in ("-t", "--threshold"):
+        threshold = float(val)
+        print("Contact threshold to use: %s" % threshold)
     elif arg in ("-d", "--dssp"):
         dssp_exe = val
         print("DSSP command to use: %s" % dssp_exe)
@@ -187,6 +203,7 @@ with open(sged_file) as csv_file:
     df = pandas.read_csv(csv_file, sep=delim, dtype=str, comment="#")
     groups = df[group_col]
     for measure in measures:
+        pbar = Bar(measure, max = len(groups))
 
         if measure == "AlphaDist":
 
@@ -204,8 +221,6 @@ with open(sged_file) as csv_file:
                 res_sel = tmp.split(";")
                 # Ignore missing data:
                 res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                #positions = [x[3:] for x in res_sel_cleaned]
-                #states = [x[:3] for x in res_sel_cleaned]
                 calphas = []
                 incomplete = False
                 for j, pos in enumerate(res_sel_cleaned):
@@ -265,6 +280,7 @@ with open(sged_file) as csv_file:
                     results_mea[i] = (
                         numpy.mean(distances) if len(distances) > 0 else numpy.nan
                     )
+                pbar.next()
             df["AlphaDistMax"] = results_max
             df["AlphaDistMin"] = results_min
             df["AlphaDistMedian"] = results_med
@@ -284,8 +300,6 @@ with open(sged_file) as csv_file:
                 res_sel = tmp.split(";")
                 # Ignore missing data:
                 res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                #positions = [x[3:] for x in res_sel_cleaned]
-                #states = [x[:3] for x in res_sel_cleaned]
                 calphas = []
                 incomplete = False
                 for j, pos in enumerate(res_sel_cleaned):
@@ -334,33 +348,29 @@ with open(sged_file) as csv_file:
                             distances.append(calphas[j] - calphas[k])
                     tree = scipy.cluster.hierarchy.single(distances)
                     clusters = scipy.cluster.hierarchy.fcluster(
-                        tree, 8, criterion="distance"
-                    )  # Threshold of 8 Angstroms
+                        tree, threshold, criterion="distance"
+                    )
                     results_nb_subs[i] = len(numpy.unique(clusters))
                     results_nb_mapped[i] = len(clusters)
+                pbar.next()
+
             df["ContactSubgraphs.NbSubgraphs"] = results_nb_subs
             df["ContactSubgraphs.NbMapped"] = results_nb_mapped
 
         if measure == "ContactMap":
 
             """
-            This provides the mean number of contacts per residue at various thresholds
+            This provides the mean number of contacts per residue at a given thresholds
             """
 
-            results_contact1 = [numpy.nan for x in groups]
-            results_contact2 = [numpy.nan for x in groups]
-            results_contact3 = [numpy.nan for x in groups]
+            results_contact = [numpy.nan for x in groups]
             for i, g in enumerate(groups):
                 tmp = g[1 : (len(g) - 1)]
                 tmp = tmp.replace(" ", "")
                 res_sel = tmp.split(";")
                 # Ignore missing data:
                 res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                #positions = [x[3:] for x in res_sel_cleaned]
-                #states = [x[:3] for x in res_sel_cleaned]
-                num_contact1 = [0 for x in res_sel_cleaned]
-                num_contact2 = [0 for x in res_sel_cleaned]
-                num_contact3 = [0 for x in res_sel_cleaned]
+                num_contact = [0 for x in res_sel_cleaned]
                 for j, pos in enumerate(res_sel_cleaned):
                     s = pos.split(":") # Assuming format Chain:Residue
                     if len(s) != 2:
@@ -398,27 +408,17 @@ with open(sged_file) as csv_file:
                                     and "CA" in chain[res_id]
                                 ):
                                     distance = search_res["CA"] - chain[res_id]["CA"]
-                                    if distance <= 5:
-                                        num_contact1[j] = num_contact1[j] + 1
-                                    if distance <= 8:
-                                        num_contact2[j] = num_contact2[j] + 1
-                                    if distance <= 10:
-                                        num_contact3[j] = num_contact3[j] + 1
+                                    if distance <= threshold:
+                                        num_contact[j] = num_contact[j] + 1
                     else:
                         print("ERROR! There is no residue %s in PDB file." % res_sel[j])
                         exit(-2)
-                results_contact1[i] = (
-                    numpy.mean(num_contact1) if len(num_contact1) > 0 else numpy.nan
+                results_contact[i] = (
+                    numpy.mean(num_contact) if len(num_contact) > 0 else numpy.nan
                 )
-                results_contact2[i] = (
-                    numpy.mean(num_contact2) if len(num_contact2) > 0 else numpy.nan
-                )
-                results_contact3[i] = (
-                    numpy.mean(num_contact3) if len(num_contact3) > 0 else numpy.nan
-                )
-            df["NbContact5"] = results_contact1
-            df["NbContact8"] = results_contact2
-            df["NbContact10"] = results_contact3
+                pbar.next()
+
+            df["NbContact"] = results_contact
 
         elif measure == "DSSPsum":
             # DSSP cannot handle multiple models, we get the first one only
@@ -449,8 +449,6 @@ with open(sged_file) as csv_file:
                     res_sel = tmp.split(";")
                     # Ignore missing data:
                     res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                    #positions = [x[3:] for x in res_sel_cleaned]
-                    #states = [x[0:3] for x in res_sel_cleaned]
                     motifs = [numpy.nan for x in res_sel_cleaned]
                     rsa = [numpy.nan for x in res_sel_cleaned]
                     for j, pos in enumerate(res_sel_cleaned):
@@ -514,9 +512,11 @@ with open(sged_file) as csv_file:
                         if len(rsa) > 0 and not all(numpy.isnan(rsa))
                         else numpy.nan
                     )
+                pbar.next()
             except Exception as e:
                 print("ERROR! DSSP computation failed. Outputing 'nan'.")
                 print(str(e))
+
             df["RsaMax"] = results_rsa_max
             df["RsaMin"] = results_rsa_min
             df["RsaMedian"] = results_rsa_med
@@ -549,8 +549,6 @@ with open(sged_file) as csv_file:
                     res_sel = tmp.split(";")
                     # Ignore missing data:
                     res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                    #positions = [x[3:] for x in res_sel_cleaned]
-                    #states = [x[0:3] for x in res_sel_cleaned]
                     motifs = [numpy.nan for x in res_sel_cleaned]
                     rsa = [numpy.nan for x in res_sel_cleaned]
                     for j, pos in enumerate(res_sel_cleaned):
@@ -599,9 +597,11 @@ with open(sged_file) as csv_file:
                         if len(rsa) > 0 and not all(numpy.isnan(rsa))
                         else numpy.nan
                     )
+                pbar.next()
             except Exception as e:
                 print("ERROR! DSSP computation failed. Outputing 'nan'.")
                 print(str(e))
+
             df["Rsa"] = results_rsa
             df["SecondaryStructure"] = results_str
 
@@ -617,7 +617,6 @@ with open(sged_file) as csv_file:
                     res_sel = tmp.split(";")
                     # Ignore missing data:
                     res_sel_cleaned = [x for x in res_sel if x != "NA"]
-                    #positions = [x[3:] for x in res_sel_cleaned]
                     res_depth = [numpy.nan for x in res_sel_cleaned]
                     ca_depth = [numpy.nan for x in res_sel_cleaned]
                     for j, pos in enumerate(res_sel_cleaned):
@@ -651,10 +650,12 @@ with open(sged_file) as csv_file:
                         if len(ca_depth) > 0 and not all(numpy.isnan(ca_depth))
                         else numpy.nan
                     )
+                pbar.next()
             except:
                 print(
                     "ERROR! Computation of molecular surface failed. Outputing 'nan'."
                 )
+
             df["ResidueDepth"] = results_res_depth
             df["CalphaDepth"] = results_ca_depth
 
@@ -821,7 +822,41 @@ with open(sged_file) as csv_file:
                             group_labels[j] = struct_index[chain_sel][site]
                 results_labels[i] = "[%s]" % (";".join(group_labels))
 
+                pbar.next()
+                
             df["SecondaryStructureLabels"] = results_labels
+
+        if measure == "Chain":
+
+            """
+            List the chain id of each residue.
+            """
+
+            results = [numpy.nan for x in groups]
+            for i, g in enumerate(groups):
+                tmp = g[1 : (len(g) - 1)]
+                tmp = tmp.replace(" ", "")
+                res_sel = tmp.split(";")
+                # Ignore missing data:
+                res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                chain = dict()
+                for pos in res_sel_cleaned:
+                    s = pos.split(":") # Assuming format Chain:Residue
+                    if len(s) != 2:
+                        print("ERROR! PDB coordinate should be of the form chain:residue, for instance, A:LEU123.")
+                        exit(-1)
+
+                    chain[s[0]] = 1
+                if len(chain.keys()) == 0:
+                    chain = "NA"
+                else:
+                    chain = "".join(chain.keys())
+                results[i] = chain
+                pbar.next()
+                
+            df["Chain"] = results
+
+        print("\r")
 
     # Write results:
     df.to_csv(output_file, sep = delim, na_rep = "NA", index = False)

@@ -45,7 +45,7 @@ for arg, val in arguments:
         print("SGED file: %s" % sged_file)
     elif arg in ("-o", "--output"):
         output_file = val
-        print("Output merged file: %s" % output_file)
+        print("Output pairs file: %s" % output_file)
     elif arg in ("-g", "--group"):
         group_col = val
         print("Coordinates are in column: %s" % group_col)

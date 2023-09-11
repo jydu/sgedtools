@@ -69,7 +69,9 @@ python3 ../../src/sged-structure-infos.py \
          --group PDB \
          --pdb 3eg4.cif \
          --pdb-format mmCif \
-         --measures AlphaDist,DSSPsum,SecondaryStructureLabel \
+         --measure AlphaDist \
+         --measure DSSPsum \
+         --measure SecondaryStructureLabel \
          --output HOG000003295_charge_significant_PDB_infos.sged
 ```
 
@@ -106,7 +108,8 @@ python3 ../../src/sged-structure-infos.py \
          --group PDB \
          --pdb 3eg4.cif \
          --pdb-format mmCif \
-         --measures AlphaDist,DSSPsum \
+         --measure AlphaDist \
+         --measure DSSPsum \
          --output HOG000003295_charge_random_PDB_infos.sged
 ```
 
@@ -157,7 +160,7 @@ python3 ../../src/sged-structure-infos.py \
          --group PDB \
          --pdb 3eg4.cif \
          --pdb-format mmCif \
-         --measures DSSP \
+         --measure DSSP \
          --output HOG000003295_charge_siteInfos_PDB_infos.sged
 ```
 
@@ -293,7 +296,8 @@ python3 ../../src/sged-structure-infos.py \
          --group PDB \
          --pdb 3eg4.cif \
          --pdb-format mmCif \
-         --measures AlphaDist,DSSPsum \
+         --measure AlphaDist \
+         --measure DSSPsum \
          --output HOG000003295_charge_random2_PDB_infos.sged
 ```
 
