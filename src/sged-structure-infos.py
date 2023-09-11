@@ -441,7 +441,7 @@ with open(sged_file) as csv_file:
             results_rsa_mea = [numpy.nan for x in groups]
 
             try:
-                dssp = DSSP(model, pdb_file2, dssp = dssp_exe)
+                dssp = DSSP(model, pdb_file2, dssp = dssp_exe, file_type = pdb_format)
 
                 for i, g in enumerate(groups):
                     tmp = g[1 : (len(g) - 1)]
@@ -514,8 +514,9 @@ with open(sged_file) as csv_file:
                         if len(rsa) > 0 and not all(numpy.isnan(rsa))
                         else numpy.nan
                     )
-            except:
+            except Exception as e:
                 print("ERROR! DSSP computation failed. Outputing 'nan'.")
+                print(str(e))
             df["RsaMax"] = results_rsa_max
             df["RsaMin"] = results_rsa_min
             df["RsaMedian"] = results_rsa_med
@@ -540,7 +541,7 @@ with open(sged_file) as csv_file:
             results_rsa = [numpy.nan for x in groups]
 
             try:
-                dssp = DSSP(model, pdb_file2, dssp = dssp_exe)
+                dssp = DSSP(model, pdb_file2, dssp = dssp_exe, file_type = pdb_format)
 
                 for i, g in enumerate(groups):
                     tmp = g[1 : (len(g) - 1)]
@@ -598,8 +599,9 @@ with open(sged_file) as csv_file:
                         if len(rsa) > 0 and not all(numpy.isnan(rsa))
                         else numpy.nan
                     )
-            except:
+            except Exception as e:
                 print("ERROR! DSSP computation failed. Outputing 'nan'.")
+                print(str(e))
             df["Rsa"] = results_rsa
             df["SecondaryStructure"] = results_str
 
