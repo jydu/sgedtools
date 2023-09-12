@@ -3,6 +3,7 @@
 """ Created on 12/02/20 by jdutheil
 
     Convert alignment coordinates to species-specific and structure coordinates
+    This program is part of the SgedTools package.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
