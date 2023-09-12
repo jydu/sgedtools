@@ -144,7 +144,7 @@ png /path/to/final.png, dpi=300, ray=1
 save /path/to/final.pdb, selection=my_residues
 ```
 
-```
+## References
 
 [^1]: Yang Z. PAML: a program package for phylogenetic analysis by maximum likelihood. 
 Comput Appl Biosci. 1997 Oct;13(5):555-6. doi: 10.1093/bioinformatics/13.5.555. 
