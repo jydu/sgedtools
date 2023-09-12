@@ -9,8 +9,8 @@ import getopt, sys
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:o:m:h"
-full_opt = ["paml=", "output=", "method=", "help"]
+unix_opt = "p:o:m:ch"
+full_opt = ["paml=", "output=", "method=", "csv", "help"]
 
 def usage() :
     print(
@@ -23,6 +23,7 @@ Available arguments:
     --paml (-p): PAML output file (required).
     --output (-o): Output SGED file (required).
     --method (-m): Method to consider, 'bayesian' or 'naive' (default: bayesian).
+    --csv (-c): Input SGED file is with comas instead of tabs (default)
     --help (-h): Print this message.
 """
     )
@@ -35,6 +36,7 @@ except getopt.error as err:
     sys.exit(2)
 
 method = "bayesian"
+tabseq = True
 for arg, val in arguments:
     if arg in ("-p", "--paml"):
         paml_file = val
@@ -45,9 +47,18 @@ for arg, val in arguments:
     elif arg in ("-m", "--method"):
         method = val.lower()
         print("Method: %s" % method)
+    elif arg in ("-c", "--csv"):
+        tabseq = False
     elif arg in ("-h", "--help"):
         usage()
         
+if tabseq:
+    print("SGED file is in TSV format.")
+    delim = "\t"
+else:
+    print("SGED file is in CSV format.")
+    delim = ","
+
 # Check required arguments
 
 if not 'paml_file' in globals():
@@ -86,12 +97,11 @@ for line in lines:
     positive_sites.append(site_info)
 
 # convert it to the data frame and add square brackets
-df = pd.DataFrame(positive_sites, columns=['position', 'amino_acid', 'probability'])
-df.insert(loc=0, column='Group', value='[' + df['position'] + ']')
-df.drop(['position'], axis=1, inplace=True)
-print(df)
+df = pd.DataFrame(positive_sites, columns = ['position', 'amino_acid', 'probability'])
+df.insert(loc = 0, column = 'Group', value = '[' + df['position'] + ']')
+df.drop(['position'], axis = 1, inplace = True)
 
 # converting to the csv file
-df.to_csv(output_file, index = False)
+df.to_csv(output_file, index = False, sep = delim)
 
 print("Done.")

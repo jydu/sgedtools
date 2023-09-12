@@ -46,17 +46,15 @@ selected sites in the main result file of PAML should be extracted and converted
 SGED format.
 In this example, the SGED file will contain all (positively selected) sites reported by PAML.
 
-The converting process is done with the sged-paml2sged.py script:
+The converting process is done with the `sged-paml2sged.py` script:
 
 ```bash
-python3 sged-paml2sged.py -p mlc.txt -o ps.csv -m bayesian
+python3 ../../src/sged-paml2sged.py \
+    --paml mlc \
+    --output lysozymeLarge-possel.sged \
+    --method bayesian
 ```
-where
-
-* -p refers to the PAML result file,
-* -o is the output file, which will be written in SGED format (TSV or CSV),
-* -m statistical method for positively selected sites, either "naive" or "bayesian".
-
+We retrieve the sites detected by the empirical Bayesian method.
 
 
 ## Getting a PDB file and creating a PDB index
@@ -74,24 +72,16 @@ of the foreground branch was inserted to the MEGA7 (MEGA7: Molecular Evolutionar
 from a text file, translated into the protein sequence, and exported as fasta format.
 
 ```bash
-python3 sged-create-structure-index.py \
-          -p *.pdb \
-          -f PDB \
-          -a colobus_aa.fas \
-          -g fasta \
-          -o PDB_index.txt \
-          -x
+python3 ../../src/sged-create-structure-index.py \
+          --pdb "*.pdb" \
+          --pdb-format PDB \
+          --alignment colobus_aa.fas \
+          --alignment-format fasta \
+          --output lysozymeLarge_PdbIndex.txt \
+          --exclude-incomplete
 ```
 
-The command lines arguments are the following:
-
-* -p the input PDB file(s). Several files can be listed use multiple -p arguments, or a glob pattern can be specified. Alternatively: PDB ids can be specified when the format is set to `remote:`.
-* -f the structure file format, one of PDB or MMCIF. When the `remote:` prefix is added (e.g. `-f remote:MMCIF`), structure files will be downloaded from the server.
-* -a the alignment file for which the index should be created,
-* -g the alignment file format. Any file format can be used supported by Bio.SeqIO, check [here](https://biopython.org/docs/1.76/api/Bio.SeqIO.html) : Clustal (.clustal, .clustalw, .aln), FASTA (.fasta, .fas, .fa, .fsa, .mpfa), NEXUS (.nexus, .nxs), IntelliGenetics (.ig, .mase)...
-* -o the output file where to write the PDB index,
-* -x only keep the chain(s) with the lowest amount of incomplete data (e.g. amino acids with missing lateral chain).
-
+Note that we use a glob pattern to analyse all PDB files in the folder. For the glob pattern to be parsed by the program and not bash (which would lead to a program error), we surround the pattern by quotes.
 To create the index, the program will align all sequences from the input aligment with all chains from the selected PDB entries, and keep the best matching pair.
 
 ## Coordinates translation
@@ -100,61 +90,56 @@ Lastly, identified positively selected sites should be translated according to t
 In this step, the converted SGED file and the PDB index file are needed. 
 
 ```bash
-python3 sged-translate-coords.py \
-          -s ps.csv \
-          -o translated.csv \
-          -i PDB_index.txt \
-          -n PDB \
-          -c
+python3 ../../src/sged-translate-coords.py \
+          --sged lysozymeLarge-possel.sged \
+          --output lysozymeLarge-possel-PDB.sged \
+          --index lysozymeLarge_PdbIndex.txt \
+          --name PDB
 ```
 
-Command line arguments:
+Which gives:
 
-* -s the SGED input file,
-* -o the output file that will include identified the positively selected sites and corresponding PDB coordinates,
-* -i the PDB index file,
-* -n the column name for corresponding PDB coordinates,
-* -c tells the program to use CSV format instead of TSV for SGED files
-
-An example of the output for our example (first 5 rows):
 ```
-Group,PDB,amino_acid,probability
-[14],[ARG14],R,0.859
-[21],[ARG21],R,0.858
-[23],[ILE23],I,0.853
-[37],[GLY37],G,0.510
-...
+roup   PDB     amino_acid      probability
+[14]    [A:ARG14]       R       0.859
+[21]    [A:ARG21]       R       0.858
+[23]    [A:ILE23]       I       0.853
+[37]    [A:GLY37]       G       0.510
+[41]    [NA]    R       0.710
+[50]    [NA]    R       0.704
+[62]    [A:ARG62]       R       0.564
+[87]    [A:ASP87]       D       0.869
+[126]   [A:GLN126]      Q       0.710
+```
 
 ## Visualizing the 3D Protein Structure
 
-Visualization of the 3D protein structure and positively selected sites onto it
-were provided by PyMOL (Schrödinger et al. 2020)[^6] version 2.5.5 (2023).
+We can visualize the 3D protein structure and positively selected sites onto it
+using PyMOL (Schrödinger et al. 2020)[^6] version 2.5.5 (2023).
 
-To visualize the protein (134l.pdb) and positively selected sites, we used PyMOL's 
-graphical user interface (GUI) and command-line interface.
-
-First, we open the PDB file in PyMOL 
+First, we open the PDB file: 
 ```bash
 pymol /path/to/134l.pdb
 ```
 
-The model and color of the protein structure can be arranged by using options in PyMOL or,
-```bash
+The model and color of the protein structure can be arranged by using options in PyMOL or using the PyMOL command line interface:
+
+```
 show mesh, all
 ```
 
 Then we select the positively selected residues to show onto the protein structure
-```bash
+```
 select my_residues, resi 14+21+23+37...
 ```
 
 Again the model and color of the positively selected residues can be arranged by PyMOL options or,
-```bash
+```
 show spheres, my_residues
 ```
 
 Finally, the 3D structure can be saved in PNG format or PDB format
-```bash
+```
 png /path/to/final.png, dpi=300, ray=1
 save /path/to/final.pdb, selection=my_residues
 ```
