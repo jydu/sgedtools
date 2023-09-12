@@ -1,5 +1,5 @@
-      seqfile = lysozymeLarge.nuc
-     treefile = lysozymeLarge.trees
+      seqfile = ../data/lysozymeLarge.nuc
+     treefile = ../data/lysozymeLarge.trees
 
       outfile = mlc 
         noisy = 3
