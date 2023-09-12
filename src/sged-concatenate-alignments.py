@@ -3,6 +3,7 @@
 """ Created on 02/12/21 by jdutheil
 
     Merge a series of sequence alignments and output a SGED file with coordinates.
+    This program is part of the SgedTools package.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
