@@ -526,7 +526,7 @@ with open(sged_file) as csv_file:
                         if len(rsa) > 0 and not all(numpy.isnan(rsa))
                         else numpy.nan
                     )
-                pbar.next()
+                    pbar.next()
             except Exception as e:
                 print("ERROR! DSSP computation failed. Outputing 'nan'.")
                 print(str(e))
@@ -611,7 +611,7 @@ with open(sged_file) as csv_file:
                         if len(rsa) > 0 and not all(numpy.isnan(rsa))
                         else numpy.nan
                     )
-                pbar.next()
+                    pbar.next()
             except Exception as e:
                 print("ERROR! DSSP computation failed. Outputing 'nan'.")
                 print(str(e))
@@ -664,7 +664,7 @@ with open(sged_file) as csv_file:
                         if len(ca_depth) > 0 and not all(numpy.isnan(ca_depth))
                         else numpy.nan
                     )
-                pbar.next()
+                    pbar.next()
             except:
                 print(
                     "ERROR! Computation of molecular surface failed. Outputing 'nan'."
