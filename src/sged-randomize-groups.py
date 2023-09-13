@@ -163,7 +163,7 @@ if cond_var != "":
 # Read input data:
 with open(sged_file_sites) as csv_file_sites:
     df_sites = pandas.read_csv(
-        csv_file_sites, sep = delim, na_values = "NA", keep_default_na = False
+        csv_file_sites, sep = delim, comment = "#", na_values = "NA", keep_default_na = False
     )  # NA in columns ignored
     groups = df_sites[site_col]
     groups = [g[1 : (len(g) - 1)].replace(" ", "") for g in groups]
@@ -174,7 +174,7 @@ with open(sged_file_sites) as csv_file_sites:
 
 with open(sged_file_groups) as csv_file_groups:
     df_groups = pandas.read_csv(
-        csv_file_groups, sep = delim, na_values = "NA", keep_default_na = False
+        csv_file_groups, sep = delim, comment = "#", na_values = "NA", keep_default_na = False
     )
     groups = df_groups[group_col]
     groups_lst = [ g[1 : (len(g) - 1)].split(";") for g in groups ]
