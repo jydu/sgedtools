@@ -28,13 +28,10 @@ from Bio.Align import PairwiseAligner
 from Bio.Align import substitution_matrices
 from Bio.Data import PDBData
 
-aligner = PairwiseAligner(mode = 'global')
-aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
-
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:i:f:a:g:o:xh"
+unix_opt = "p:i:f:a:g:o:u:v:xh"
 full_opt = [
     "pdb=",
     "pdb-id=",
@@ -42,6 +39,8 @@ full_opt = [
     "alignment=",
     "alignment-format=",
     "output=",
+    "gap-open=",
+    "gap-extend=",
     "exclude-incomplete",
     "help"
 ]
@@ -65,7 +64,8 @@ Available arguments:
     --pdb-id (-i): Specify the id of the PDB file to retrieve remotely.
     --alignment (-a): Input alignment file (required);
     --alignment-format (-g): Input alignment format (default: fasta).
-        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO).
+        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO)    --gap-open (-u): Gap opening penalty in pairwise alignment (default: 0).
+    --gap-extend (-v): Gap extension penalty in pairwise alignment (default : 0).
     --output (-o): Output index file (required).
     --exclude-incomplete (-x): Exclude incomplete chains from scan (default: false).
     --help (-h): Print this message.
@@ -78,6 +78,9 @@ try:
 except getopt.error as err:
     print(str(err))
     sys.exit(2)
+
+aligner = PairwiseAligner(mode = 'global')
+aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
 
 pdb_files = []
 pdb_ids = []
@@ -108,6 +111,10 @@ for arg, val in arguments:
     elif arg in ("-o", "--output"):
         output_file = val
         print("Output index file: %s" % output_file)
+    elif arg in ("-u", "--gap-open"):
+        aligner.open_gap_score = float(val)
+    elif arg in ("-v", "--gap-extend"):
+        aligner.extend_gap_score = float(val)
     elif arg in ("-x", "--exclude-incomplete"):
         exclude_incomplete = True
     elif arg in ("-h", "--help"):
@@ -126,6 +133,9 @@ if not 'aln_file' in globals():
 if not 'output_file' in globals():
     print("Error: an output file should be provided.")
     usage()
+
+print("Using alignment open gap score: %f" % aligner.open_gap_score)
+print("Using alignment extend gap score: %f" % aligner.extend_gap_score)
 
 print("Parsing structure(s)...")
 

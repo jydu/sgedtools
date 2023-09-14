@@ -75,7 +75,7 @@ from a text file, translated into the protein sequence, and exported as fasta fo
 python3 ../../src/sged-create-structure-index.py \
           --pdb "*.pdb" \
           --pdb-format PDB \
-          --alignment colobus_aa.fas \
+          --alignment ../data/colobus_aa.fas \
           --alignment-format fasta \
           --output lysozymeLarge_PdbIndex.txt \
           --exclude-incomplete
@@ -111,6 +111,68 @@ roup   PDB     amino_acid      probability
 [87]    [A:ASP87]       D       0.869
 [126]   [A:GLN126]      Q       0.710
 ```
+Two positions could not be mapped on the structure. Looking at the structure alignment, we see that it contains several gaps:
+```
+target            0 KIFERCELARTLKKLGLDGYKGVSLANWVCLAKWESGYNTD-ATNYNP-GDE-STDYGIF
+                  0 |.|||||||||||.||.|||.|.|||||.|||||||||||--|||||--||--|||||||
+query             0 KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNT-RATNYN-AGD-RSTDYGIF
+
+target           57 QINSRYWCNNGKTPGAVNACHISCNALLQNNIADAVACAKRVVS-DPQGIRAWVAWKKH-
+                 60 |||||||||.|||||||||||.||.||||.|||||||||||||--|||||||||||.-.-
+query            57 QINSRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVV-RDPQGIRAWVAWR-NE
+
+target          115 CQNRDVS-QYVEGCGV 130
+                120 ||||||--|||.|||| 136
+query           115 CQNRDV-RQYVQGCGV 130
+```
+This is due to gap opening scores being 0 by default. We create a new index using a penalty of -2 instead:
+
+```bash
+python3 ../../src/sged-create-structure-index.py \
+          --pdb "*.pdb" \
+          --pdb-format PDB \
+          --alignment ../data/colobus_aa.fas \
+          --alignment-format fasta \
+          --gap-open -2 \
+          --output lysozymeLarge_PdbIndex2.txt \
+          --exclude-incomplete
+```
+
+```
+target            0 KIFERCELARTLKKLGLDGYKGVSLANWVCLAKWESGYNTDATNYNPGDESTDYGIFQIN
+                  0 |.|||||||||||.||.|||.|.|||||.|||||||||||.|||||.||.||||||||||
+query             0 KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQIN
+
+target           60 SRYWCNNGKTPGAVNACHISCNALLQNNIADAVACAKRVVSDPQGIRAWVAWKKHCQNRD
+                 60 ||||||.|||||||||||.||.||||.|||||||||||||.|||||||||||...|||||
+query            60 SRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVVRDPQGIRAWVAWRNECQNRD
+
+target          120 VSQYVEGCGV 130
+                120 |.|||.|||| 130
+query           120 VRQYVQGCGV 130
+```
+
+We re-translate the selected groups:
+```bash
+python3 ../../src/sged-translate-coords.py \
+          --sged lysozymeLarge-possel.sged \
+          --output lysozymeLarge-possel-PDB.sged \
+          --index lysozymeLarge_PdbIndex2.txt \
+          --name PDB
+```
+
+Which gives:
+```
+[14]	[A:ARG14]	R	0.859
+[21]	[A:ARG21]	R	0.858
+[23]	[A:ILE23]	I	0.853
+[37]	[A:GLY37]	G	0.510
+[41]	[A:ARG41]	R	0.710
+[50]	[A:ARG50]	R	0.704
+[62]	[A:ARG62]	R	0.564
+[87]	[A:ASP87]	D	0.869
+[126]	[A:GLN126]	Q	0.710
+```
 
 ## Visualizing the 3D Protein Structure
 
@@ -143,6 +205,159 @@ Finally, the 3D structure can be saved in PNG format or PDB format
 png /path/to/final.png, dpi=300, ray=1
 save /path/to/final.pdb, selection=my_residues
 ```
+
+## Testing structural hypotheses
+
+The positively selected residues are at the surface of the protein. To test whether this pattern could happen by chance, we can draw random sets of residues and look at the distribution of their solvent accessibility.
+First, we create a SGED file with a single group containing all (mappable) candidates:
+
+```bash
+echo "Group" > lysozymeLarge-possel-group.sged
+echo "[A:ARG14;A:ARG21;A:ILE23;A:GLY37;A:ARG41;A:ARG50;A:ARG62;A:ASP87;A:GLN126]" >> lysozymeLarge-possel-group.sged
+```
+
+We then compute summary structural statistics for the group:
+```bash
+python3 ../../src/sged-structure-infos.py \
+         --sged lysozymeLarge-possel-group.sged \
+         --pdb 134l.pdb \
+         --pdb-format PDB \
+         --measure AlphaDist \
+         --measure DSSPsum \
+         --output lysozymeLarge-possel-group_PDB_infos.sged
+```
+
+To assess the null distribution, we need to randomly sample sites in the protein structure. For this, we first need a list of all positions in the structure:
+```bash
+python3 ../../src/sged-structure-list.py \
+         --pdb 134l.pdb \
+         --pdb-format PDB \
+         --output 134l_residues.sged
+```
+
+We then generate random groups of 9 residues:
+```bash
+python3 ../../src/sged-randomize-groups.py \
+         --sged-groups lysozymeLarge-possel-group.sged \
+         --sged-sites 134l_residues.sged \
+         --number-replicates 10000 \
+         --output lysozymeLarge-possel-group_random.sged
+```
+
+And compute their structural properties:
+```bash
+python3 ../../src/sged-structure-infos.py \
+         --sged lysozymeLarge-possel-group_random.sged \
+         --pdb 134l.pdb \
+         --pdb-format PDB \
+         --measure AlphaDist \
+         --measure DSSPsum \
+         --output lysozymeLarge-possel-group_random_PDB_infos.sged
+```
+
+We then compare the observed values to the random expectation:
+
+```r
+sims <- read.table("lysozymeLarge-possel-group_random_PDB_infos.sged", header = TRUE)
+obs <- read.table("lysozymeLarge-possel-group_PDB_infos.sged", header = TRUE)
+
+require(ggplot2)
+require(ggpubr)
+h1 <- ggplot(sims, aes(x = AlphaDistMean)) + geom_histogram(bins = 30) +
+      geom_vline(xintercept = obs$AlphaDistMean, col = "red") +
+      xlab("Mean pairwise Calpha distance")
+h2 <- ggplot(sims, aes(x = RsaMean)) + geom_histogram(bins = 30) +
+      geom_vline(xintercept = obs$RsaMean, col = "blue") +
+      xlab("Mean Relative Solvent Accessibility")
+p <- ggarrange(h1, h2, labels = c("A", "B"))
+ggsave(p, filename = "Randomization1.png", width = 8, height = 4)
+```
+
+![](Randomization1.png)
+
+Residues are more exposed and more distant to each other than expected by chance. We can compute P values:
+
+```r
+(sum(sims$RsaMean >= obs$RsaMean) + 1)/(nrow(sims) + 1)
+(sum(sims$AlphaDistMean >= obs$AlphaDistMean) + 1)/(nrow(sims) + 1)
+```
+which gives us 4.9% for RSA and 3.6% for the Calpha distance, both significant at the 5% level.
+
+We can then ask whether candidate residues are more dispersed because they are at the surface of the protein, or whether they are more exposed because they are ore distant to each other. For this, we use conditional sampling.
+
+First, we assess whether residues are more dispersed than chance compared to residues with similar exposure. We sample sites with RSA similar to that of the positively selected sites.
+
+We get the RSA of each position in the structure:
+```bash
+python3 ../../src/sged-structure-infos.py \
+         --sged 134l_residues.sged \
+         --pdb 134l.pdb \
+         --pdb-format PDB \
+         --measure DSSP \
+         --output 134l_residues_infos.sged
+```
+
+Then we sample according to the RSA of sites:
+```bash
+python3 ../../src/sged-randomize-groups.py \
+         --sged-groups lysozymeLarge-possel-group.sged \
+         --sged-sites 134l_residues_infos.sged \
+         --measure Rsa \
+         --similarity-threshold 0.2 \
+         --number-replicates 1000 \
+         --output lysozymeLarge-possel-group_random-rsa.sged
+```
+
+We then compute structural statistics for the random groups:
+```bash
+python3 ../../src/sged-structure-infos.py \
+         --sged lysozymeLarge-possel-group_random-rsa.sged \
+         --pdb 134l.pdb \
+         --pdb-format PDB \
+         --measure AlphaDist \
+         --measure DSSPsum \
+         --output lysozymeLarge-possel-group_random-rsa_PDB_infos.sged
+```
+
+And we plot the results in R:
+```r
+sims <- read.table("lysozymeLarge-possel-group_random-rsa_PDB_infos.sged", header = TRUE)
+obs <- read.table("lysozymeLarge-possel-group_PDB_infos.sged", header = TRUE)
+
+require(ggplot2)
+require(ggpubr)
+h1 <- ggplot(sims, aes(x = AlphaDistMean)) + geom_histogram(bins = 30) +
+      geom_vline(xintercept = obs$AlphaDistMean, col = "red") +
+      xlab("Mean pairwise Calpha distance")
+h2 <- ggplot(sims, aes(x = RsaMean)) + geom_histogram(bins = 30) +
+      geom_vline(xintercept = obs$RsaMean, col = "blue") +
+      xlab("Mean Relative Solvent Accessibility")
+p <- ggarrange(h1, h2, labels = c("A", "B"))
+ggsave(p, filename = "Randomization2.png", width = 8, height = 4)
+```
+
+![](Randomization2.png)
+
+We see that the conditioning worked, as the random groups have a mean RSA centered around the one of the candidate group, removing the effect of RSA. But this conditionning also had as effect to suppress the effect on Calpha distance, meaning that the dispersion of residues was a spurious effect of their exposure.
+
+We test the other way round, sampling groups conditionned on their average Calpha distance. We can use the groups we simulated already, comparing the ones with a Calpha distance at least equal to the observed one with the others:
+
+```r
+sims <- read.table("lysozymeLarge-possel-group_random_PDB_infos.sged", header = TRUE)
+obs <- read.table("lysozymeLarge-possel-group_PDB_infos.sged", header = TRUE)
+
+require(ggplot2)
+bp <- ggplot(sims, aes(x = AlphaDistMean >= obs$AlphaDistMean, y = RsaMean)) + 
+      geom_boxplot() +
+      geom_hline(yintercept = obs$RsaMean, col = "red") +
+      xlab("Mean pairwise Calpha distance >= Observed one") +
+      ylab("Mean RSA")
+ggsave(bp, filename = "Randomization1-split.png", width = 4, height = 4)
+```
+
+![](Randomization1-split.png)
+We can see that the observed mean RSA is within the third quartile of the distribution for groups with a mean Calpha distance at least equal to that of the observed group.
+So the two properties, residues dispersion and exposure cannot be disentangled.
 
 ## References
 
