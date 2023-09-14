@@ -234,7 +234,7 @@ python3 ../../src/sged-structure-list.py \
          --output 134l_residues.sged
 ```
 
-We then generate random groups of 9 residues:
+We then generate random groups of 7 residues:
 ```bash
 python3 ../../src/sged-randomize-groups.py \
          --sged-groups lysozymeLarge-possel-group.sged \
@@ -280,7 +280,7 @@ Residues are more exposed and more distant to each other than expected by chance
 (sum(sims$RsaMean >= obs$RsaMean) + 1)/(nrow(sims) + 1)
 (sum(sims$AlphaDistMean >= obs$AlphaDistMean) + 1)/(nrow(sims) + 1)
 ```
-which gives us 4.9% for RSA and 3.6% for the Calpha distance, both significant at the 5% level.
+which gives us 3.0% for RSA and 4.4% for the Calpha distance, both significant at the 5% nominal level.
 
 We can then ask whether candidate residues are more dispersed because they are at the surface of the protein, or whether they are more exposed because they are ore distant to each other. For this, we use conditional sampling.
 
@@ -303,7 +303,7 @@ python3 ../../src/sged-randomize-groups.py \
          --sged-sites 134l_residues_infos.sged \
          --measure Rsa \
          --similarity-threshold 0.2 \
-         --number-replicates 1000 \
+         --number-replicates 10000 \
          --output lysozymeLarge-possel-group_random-rsa.sged
 ```
 
