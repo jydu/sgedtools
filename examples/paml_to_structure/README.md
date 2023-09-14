@@ -44,7 +44,7 @@ codeml lysozymeLarge.ctl
 To map the positively selected sites onto a protein structure, the identified positively
 selected sites in the main result file of PAML should be extracted and converted to the
 SGED format.
-In this example, the SGED file will contain all (positively selected) sites reported by PAML.
+In this example, the SGED file will contain all (positively selected) sites reported by PAML. To follow the original publication, we will select only sites with a posterior probability at least equal to 0.7.
 
 The converting process is done with the `sged-paml2sged.py` script:
 
@@ -52,7 +52,8 @@ The converting process is done with the `sged-paml2sged.py` script:
 python3 ../../src/sged-paml2sged.py \
     --paml mlc \
     --output lysozymeLarge-possel.sged \
-    --method bayesian
+    --method bayesian \
+    --threshold 0.7
 ```
 We retrieve the sites detected by the empirical Bayesian method.
 
@@ -100,17 +101,16 @@ python3 ../../src/sged-translate-coords.py \
 Which gives:
 
 ```
-roup   PDB     amino_acid      probability
+Group   PDB     amino_acid      probability
 [14]    [A:ARG14]       R       0.859
 [21]    [A:ARG21]       R       0.858
 [23]    [A:ILE23]       I       0.853
-[37]    [A:GLY37]       G       0.510
-[41]    [NA]    R       0.710
+[41]    [NA]    R       0.71
 [50]    [NA]    R       0.704
-[62]    [A:ARG62]       R       0.564
 [87]    [A:ASP87]       D       0.869
-[126]   [A:GLN126]      Q       0.710
+[126]   [A:GLN126]      Q       0.71
 ```
+
 Two positions could not be mapped on the structure. Looking at the structure alignment, we see that it contains several gaps:
 ```
 target            0 KIFERCELARTLKKLGLDGYKGVSLANWVCLAKWESGYNTD-ATNYNP-GDE-STDYGIF
@@ -163,15 +163,14 @@ python3 ../../src/sged-translate-coords.py \
 
 Which gives:
 ```
-[14]	[A:ARG14]	R	0.859
-[21]	[A:ARG21]	R	0.858
-[23]	[A:ILE23]	I	0.853
-[37]	[A:GLY37]	G	0.510
-[41]	[A:ARG41]	R	0.710
-[50]	[A:ARG50]	R	0.704
-[62]	[A:ARG62]	R	0.564
-[87]	[A:ASP87]	D	0.869
-[126]	[A:GLN126]	Q	0.710
+Group   PDB     amino_acid      probability
+[14]    [A:ARG14]       R       0.859
+[21]    [A:ARG21]       R       0.858
+[23]    [A:ILE23]       I       0.853
+[41]    [A:ARG41]       R       0.71
+[50]    [A:ARG50]       R       0.704
+[87]    [A:ASP87]       D       0.869
+[126]   [A:GLN126]      Q       0.71
 ```
 
 ## Visualizing the 3D Protein Structure
@@ -209,11 +208,11 @@ save /path/to/final.pdb, selection=my_residues
 ## Testing structural hypotheses
 
 The positively selected residues are at the surface of the protein. To test whether this pattern could happen by chance, we can draw random sets of residues and look at the distribution of their solvent accessibility.
-First, we create a SGED file with a single group containing all (mappable) candidates:
+First, we create a SGED file with a single group containing all candidates:
 
 ```bash
 echo "Group" > lysozymeLarge-possel-group.sged
-echo "[A:ARG14;A:ARG21;A:ILE23;A:GLY37;A:ARG41;A:ARG50;A:ARG62;A:ASP87;A:GLN126]" >> lysozymeLarge-possel-group.sged
+echo "[A:ARG14;A:ARG21;A:ILE23;A:ARG41;A:ARG50;A:ASP87;A:GLN126]" >> lysozymeLarge-possel-group.sged
 ```
 
 We then compute summary structural statistics for the group:
