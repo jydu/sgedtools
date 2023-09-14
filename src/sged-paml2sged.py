@@ -23,8 +23,8 @@ import getopt, sys
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:o:m:ch"
-full_opt = ["paml=", "output=", "method=", "csv", "help"]
+unix_opt = "p:o:m:t:ch"
+full_opt = ["paml=", "output=", "method=", "threshold=", "csv", "help"]
 
 def usage() :
     print(
@@ -37,6 +37,7 @@ Available arguments:
     --paml (-p): PAML output file (required).
     --output (-o): Output SGED file (required).
     --method (-m): Method to consider, 'bayesian' or 'naive' (default: bayesian).
+    --threshold (-t): Minimum posterior probability to include a site (default: 0).
     --csv (-c): Input SGED file is with comas instead of tabs (default)
     --help (-h): Print this message.
 """
@@ -51,6 +52,7 @@ except getopt.error as err:
 
 method = "bayesian"
 tabseq = True
+min_post_prob = 0.
 for arg, val in arguments:
     if arg in ("-p", "--paml"):
         paml_file = val
@@ -61,6 +63,9 @@ for arg, val in arguments:
     elif arg in ("-m", "--method"):
         method = val.lower()
         print("Method: %s" % method)
+    elif arg in ("-t", "--threshold"):
+        min_post_prob = float(val)
+        print("Minimum posterior probability: %s" % min_post_prob)
     elif arg in ("-c", "--csv"):
         tabseq = False
     elif arg in ("-h", "--help"):
@@ -112,8 +117,12 @@ for line in lines:
 
 # convert it to the data frame and add square brackets
 df = pd.DataFrame(positive_sites, columns = ['position', 'amino_acid', 'probability'])
+df['probability'] = df['probability'].astype(float)
 df.insert(loc = 0, column = 'Group', value = '[' + df['position'] + ']')
 df.drop(['position'], axis = 1, inplace = True)
+
+# filter the results:
+df = df[(df['probability'] >= min_post_prob)]
 
 # converting to the csv file
 df.to_csv(output_file, index = False, sep = delim)

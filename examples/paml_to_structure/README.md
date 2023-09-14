@@ -359,6 +359,9 @@ ggsave(bp, filename = "Randomization1-split.png", width = 4, height = 4)
 We can see that the observed mean RSA is within the third quartile of the distribution for groups with a mean Calpha distance at least equal to that of the observed group.
 So the two properties, residues dispersion and exposure cannot be disentangled.
 
+
+```
+
 ## References
 
 [^1]: Yang Z. PAML: a program package for phylogenetic analysis by maximum likelihood. 
