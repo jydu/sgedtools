@@ -209,10 +209,11 @@ save /path/to/final.pdb, selection=my_residues
 
 The positively selected residues are at the surface of the protein. To test whether this pattern could happen by chance, we can draw random sets of residues and look at the distribution of their solvent accessibility.
 First, we create a SGED file with a single group containing all candidates:
-
 ```bash
-echo "Group" > lysozymeLarge-possel-group.sged
-echo "[A:ARG14;A:ARG21;A:ILE23;A:ARG41;A:ARG50;A:ASP87;A:GLN126]" >> lysozymeLarge-possel-group.sged
+python3 ../../src/sged-group.py \
+         --sged lysozymeLarge-possel-PDB.sged \
+         --group PDB \
+         --output lysozymeLarge-possel-group.sged
 ```
 
 We then compute summary structural statistics for the group:

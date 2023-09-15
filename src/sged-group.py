@@ -1,9 +1,8 @@
 #! /usr/bin/python
 
-""" Created on 13/02/20 by jdutheil
+""" Created on 15/09/23 by jdutheil
 
-    Convert multi-sites groups into single sites groups. 
-    Allow to specify which column to replicate.
+    Group individual sites or groups into (super) groups.
     This program is part of the SgedTools package.
 
     This program is free software: you can redistribute it and/or modify
@@ -26,19 +25,21 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:o:d:g:ch"
-full_opt = ["sged=", "output=", "data=", "group=", "csv", "help"]
+unix_opt = "s:b:o:d:g:ch"
+full_opt = ["sged=", "by=", "output=", "data=", "group=", "csv", "help"]
 
 def usage() :
     print(
 """
-sged-ungroup
+sged-group
 
-    Convert multi-sites groups into single sites groups. 
-    Allow to specify which column to replicate.
+    Group individual sites or groups into (super) groups.
+    A column can be specified to group sites.
+    Other columns are discarded.
 
 Available arguments:
     --sged (-s): Input SGED file (required).
+    --by (-b): Group according to the specified column (default: group everything).
     --output (-o): Output SGED file (required).
     --group (-g): Column where group coordinates are stored (default: Group).
     --data (-d): Column selection (default: empty selection). 
@@ -60,13 +61,17 @@ except getopt.error as err:
 tabsep = True  # TSV by default
 selected_cols = []
 group_col = "Group"
+
 for arg, val in arguments:
     if arg in ("-s", "--sged"):
         sged_file = val
         print("SGED file: %s" % sged_file)
+    elif arg in ("-b", "--by"):
+        group_by = val
+        print("Group sites according to column: %s" % group_by)
     elif arg in ("-o", "--output"):
         output_file = val
-        print("Output ungrouped file: %s" % output_file)
+        print("Output grouped file: %s" % output_file)
     elif arg in ("-d", "--data"):
         selected_cols = val.split(",")
     elif arg in ("-g", "--group"):
@@ -92,17 +97,21 @@ if not 'output_file' in globals():
 
 # Start parsing
 with open(sged_file) as csv_file:
-    df = pandas.read_csv(csv_file, sep=delim, dtype=str)
-    groups = df[group_col]
+    df = pandas.read_csv(csv_file, sep = delim, dtype = str)
+    if not 'group_by' in globals():
+        df['%by%'] = [True] * len(df.index)
+        group_by = '%by%'
     with open(output_file, "w") as handle:
-        handle.write("Group%s%s\n" % (delim, delim.join(df[selected_cols].columns)))
-        for i, g in enumerate(groups):
-            tmp = g[1 : (len(g) - 1)]
-            tmp = tmp.replace(" ", "")
-            positions = tmp.split(";")
-            for j in positions:
-                handle.write(
-                    "[%s]%s%s\n" % (j, delim, delim.join(df[selected_cols].iloc[i]))
-                )
+        handle.write("Group\n")
+        grouped = df.groupby(group_by)
+        for subset in grouped:
+            groups = subset[1][group_col]
+            supergroup = []
+            for g in groups:
+                tmp = g[1 : (len(g) - 1)]
+                tmp = tmp.replace(" ", "")
+                positions = tmp.split(";")
+                supergroup =  supergroup + positions
+            handle.write("[%s]\n" % (";".join(supergroup)))
 
 print("Done.")
