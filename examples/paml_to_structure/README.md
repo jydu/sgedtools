@@ -82,8 +82,8 @@ python3 ../../src/sged-create-structure-index.py \
           --exclude-incomplete
 ```
 
-Note that we use a glob pattern to analyse all PDB files in the folder. For the glob pattern to be parsed by the program and not bash (which would lead to a program error), we surround the pattern by quotes.
-To create the index, the program will align all sequences from the input aligment with all chains from the selected PDB entries, and keep the best matching pair.
+Note that we use a glob pattern to analyse all PDB files in the folder. For the glob pattern to be parsed by the program and not bash (which would lead to a program error), we surround the pattern with quotes.
+To create the index, the program will align all sequences from the input alignment with all chains from the selected PDB entries and keep the best matching pair.
 
 ## Coordinates translation
 
@@ -205,6 +205,9 @@ png /path/to/final.png, dpi=300, ray=1
 save /path/to/final.pdb, selection=my_residues
 ```
 
+![](Example1_PyMol.png) ![](Example1.2_PyMol.png)
+
+
 ## Testing structural hypotheses
 
 The positively selected residues are at the surface of the protein. To test whether this pattern could happen by chance, we can draw random sets of residues and look at the distribution of their solvent accessibility.
@@ -283,7 +286,7 @@ Residues are more exposed and more distant to each other than expected by chance
 ```
 which gives us 3.0% for RSA and 4.4% for the Calpha distance, both significant at the 5% nominal level.
 
-We can then ask whether candidate residues are more dispersed because they are at the surface of the protein, or whether they are more exposed because they are ore distant to each other. For this, we use conditional sampling.
+We can then ask whether candidate residues are more dispersed because they are at the surface of the protein, or whether they are more exposed because they are more distant from each other. For this, we use conditional sampling.
 
 First, we assess whether residues are more dispersed than chance compared to residues with similar exposure. We sample sites with RSA similar to that of the positively selected sites.
 
@@ -338,9 +341,9 @@ ggsave(p, filename = "Randomization2.png", width = 8, height = 4)
 
 ![](Randomization2.png)
 
-We see that the conditioning worked, as the random groups have a mean RSA centered around the one of the candidate group, removing the effect of RSA. But this conditionning also had as effect to suppress the effect on Calpha distance, meaning that the dispersion of residues was a spurious effect of their exposure.
+We see that the conditioning worked, as the random groups have a mean RSA centred around the one of the candidate groups, removing the effect of RSA. But this conditioning also had an effect to suppress the effect on Calpha distance, meaning that the dispersion of residues was a spurious effect of their exposure.
 
-We test the other way round, sampling groups conditionned on their average Calpha distance. We can use the groups we simulated already, comparing the ones with a Calpha distance at least equal to the observed one with the others:
+We test the other way round, sampling groups conditioned on their average Calpha distance. We can use the groups we simulated already, comparing the ones with a Calpha distance at least equal to the observed one with the others:
 
 ```r
 sims <- read.table("lysozymeLarge-possel-group_random_PDB_infos.sged", header = TRUE)
@@ -357,7 +360,7 @@ ggsave(bp, filename = "Randomization1-split.png", width = 4, height = 4)
 
 ![](Randomization1-split.png)
 We can see that the observed mean RSA is within the third quartile of the distribution for groups with a mean Calpha distance at least equal to that of the observed group.
-So the two properties, residues dispersion and exposure cannot be disentangled.
+So the two properties, residue dispersion and exposure cannot be disentangled.
 
 
 ```
