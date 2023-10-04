@@ -191,12 +191,21 @@ show mesh, all
 
 Then we select the positively selected residues to show onto the protein structure
 ```
-select my_residues, resi 14+21+23+37...
+select my_residues, resi 14+21+23+41...
 ```
 
 Again the model and color of the positively selected residues can be arranged by PyMOL options or,
 ```
 show spheres, my_residues
+```
+Labels can be showed using PyMOL interface.
+For label size:
+```
+label_size set to 25
+```
+For label positions:
+```
+ label_position set to [ 4, 3, 8 ]
 ```
 
 Finally, the 3D structure can be saved in PNG format or PDB format
@@ -205,7 +214,7 @@ png /path/to/final.png, dpi=300, ray=1
 save /path/to/final.pdb, selection=my_residues
 ```
 
-![](Example1_PyMol.png) ![](Example1.2_PyMol.png)
+![](Pymol_example_1.png) ![](Pymol_example_1.2.png)
 
 
 ## Testing structural hypotheses
