@@ -334,6 +334,7 @@ h2 <- ggplot(sims, aes(x = RsaMean)) + geom_histogram(bins = 30) +
       xlab("Mean Relative Solvent Accessibility")
 p <- ggarrange(h1, h2, labels = c("A", "B"))
 ggsave(p, filename = "Randomization2.png", width = 8, height = 4)
+(sum(sims$AlphaDistMean >= obs$AlphaDistMean) + 1)/(nrow(sims) + 1)
 ```
 
 ![](Randomization2.png)
@@ -360,7 +361,6 @@ We can see that the observed mean RSA is within the third quartile of the distri
 So the two properties, residues dispersion and exposure cannot be disentangled.
 
 
-```
 
 ## References
 
