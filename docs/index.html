@@ -149,15 +149,20 @@ body, html {
       <li>NumPy and SciPy, for calculations and numerics.</li>
       <li>progress, for displaying progress bars.</li>
     </ul>
-    These packages can all be installed using the pip manager:
+    These packages can all be installed using the pip manager. To avoid any version conflict, it is recommended to use a conda environment:
     <pre><code>
-    pip3 install progress
-    pip3 install pandas
-    pip3 install numpy
-    pip3 install scipy
-    pip3 install biopython
+    conda create -n sgedtools-env python=3
+    conda activate sgedtools-env
+    pip install progress
+    pip install pandas
+    pip install numpy
+    pip install scipy
+    pip install biopython
     </code></pre>
-    That is pretty much it!
+    A Makefile is provided for easier installation. You can run it using, for instance:
+    <pre><code>
+    cd sgedtools
+    make install PREFIX=$HOME/.local/bin
     </p>
   </div>
 </div>
