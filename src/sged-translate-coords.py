@@ -26,7 +26,7 @@ cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
 unix_opt = "s:g:o:i:n:rch"
-full_opt = ["sged=", "group-=", "output=", "index=", "name=", "reverse", "csv", "help"]
+full_opt = ["sged=", "group=", "output=", "index=", "name=", "reverse", "csv", "help"]
 
 def usage() :
     print(
@@ -62,6 +62,9 @@ for arg, val in arguments:
     if arg in ("-s", "--sged"):
         sged_file = val
         print("SGED file: %s" % sged_file)
+    elif arg in ("-g", "--group"):
+        group_col = val
+        print("Group coordinates are in column: %s" % group_col)
     elif arg in ("-o", "--output"):
         output_file = val
         print("Output translated file: %s" % output_file)
