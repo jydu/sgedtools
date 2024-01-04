@@ -81,15 +81,11 @@ if not 'output_file' in globals():
     usage()
 
 # Get indexes:
-index1 = pandas.read_csv(
-    open(index1_file), sep = ",", comment = "#", dtype = str
-)
+index1 = pandas.read_csv(open(index1_file), sep = ",", comment = "#", dtype = str)
 index1.index = index1.index.map(str)
 index1.dropna(inplace=True)
 
-index2 = pandas.read_csv(
-    open(index2_file), sep = ",", comment = "#", dtype = str, index_col = 0
-)
+index2 = pandas.read_csv(open(index2_file), sep = ",", comment = "#", dtype = str, index_col = 0)
 index2.index = index2.index.map(str)
 index2.dropna(inplace=True)
 

@@ -92,7 +92,7 @@ if not 'output_file' in globals():
 
 # Start parsing
 with open(sged_file) as csv_file:
-    df = pandas.read_csv(csv_file, sep=delim, dtype=str)
+    df = pandas.read_csv(csv_file, sep=delim, dtype=str, comment='#')
     groups = df[group_col]
     with open(output_file, "w") as handle:
         handle.write("Group%s%s\n" % (delim, delim.join(df[selected_cols].columns)))

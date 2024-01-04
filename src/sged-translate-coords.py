@@ -111,7 +111,7 @@ index.dropna(inplace=True)
 # Start parsing
 with open(sged_file) as csv_file:
     df = pandas.read_csv(
-        csv_file, sep=delim, dtype=str, keep_default_na=False
+        csv_file, sep=delim, dtype=str, keep_default_na=False, comment='#'
     )  # NA in columns ignored
     groups = df["Group"]
     df.drop("Group", axis=1, inplace=True)

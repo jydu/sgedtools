@@ -97,7 +97,7 @@ if not 'output_file' in globals():
 
 # Start parsing
 with open(sged_file) as csv_file:
-    df = pandas.read_csv(csv_file, sep = delim, dtype = str)
+    df = pandas.read_csv(csv_file, sep = delim, dtype = str, comment = '#')
     if not 'group_by' in globals():
         df['%by%'] = [True] * len(df.index)
         group_by = '%by%'
