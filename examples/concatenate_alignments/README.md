@@ -4,13 +4,18 @@ Inter-protein coevolution
 We look at coevolution between the three cox1, cox2, and cox3 subunits of the the cytochrome oxidase.
 We would like to test whether there is coevolution between subunits and concatenate the three input alignments.
 
+We assume that all dependencies have been installed into a conda environment and activate it:
+
+```bash
+conda activate sgedtools-env
+```
 
 ## Concatenate alignments and create alignment indexes
 
 We can use the `sged-concatenate-alignments` program to do all operations:
 
 ```bash
-python3 ../../src/sged-concatenate-alignments.py \
+sged-concatenate-alignments \
     --aln1 ../data/cox1.aln.fasta \
     --aln2 ../data/cox2.aln.fasta \
     --output-aln cox12.aln.fasta \
@@ -56,7 +61,7 @@ echo "../data/cox3.aln.fasta" >> aln.lst
 Then run the script:
 
 ```bash
-python3 ../../src/sged-concatenate-alignments.py \
+sged-concatenate-alignments \
     --aln-list aln.lst \
     --output-aln coxall.aln.fasta \
     --output-sged coxall.index.sged
@@ -106,27 +111,27 @@ Rscript computePValues.R
 We create a structure index for each input alignments. We start with cox1, for which we download the structure 6J8M:
 
 ```bash
-python3 ../../src/sged-create-structure-index.py \
-         --pdb-id 6J8M \
-         --pdb-format remote:mmCif \
-         --alignment cox1.aln.fasta \
-         --output cox1_PdbIndex.txt
+sged-create-structure-index \
+    --pdb-id 6J8M \
+    --pdb-format remote:mmCif \
+    --alignment ../data/cox1.aln.fasta \
+    --output cox1_PdbIndex.txt
 ```
 This maps to chain A.
 We then do the two other units, using the downloaded structure.
 
 ```bash
-python3 ../../src/sged-create-structure-index.py \
-         --pdb 6j8m.cif \
-         --pdb-format mmCif \
-         --alignment ../data/cox2.aln.fasta \
-         --output cox2_PdbIndex.txt
+sged-create-structure-index \
+    --pdb 6j8m.cif \
+    --pdb-format mmCif \
+    --alignment ../data/cox2.aln.fasta \
+    --output cox2_PdbIndex.txt
 
-python3 ../../src/sged-create-structure-index.py \
-         --pdb 6j8m.cif \
-         --pdb-format mmCif \
-         --alignment ../data/cox3.aln.fasta \
-         --output cox3_PdbIndex.txt
+sged-create-structure-index \
+    --pdb 6j8m.cif \
+    --pdb-format mmCif \
+    --alignment ../data/cox3.aln.fasta \
+    --output cox3_PdbIndex.txt
 ```
 
 cox2 maps to chain B and cox3 to chain C.
@@ -134,39 +139,39 @@ cox2 maps to chain B and cox3 to chain C.
 We then combine the indexes to map each PDB chain to the concatenated alignment:
 
 ```bash
-python3 ../../src/sged-liftover-index.py \
-         --index1 cox1.aln.fasta_AlnIndex.txt \
-         --index2 cox1_PdbIndex.txt \
-         --output cox1.aln.fasta_PdbIndex.txt
+sged-liftover-index \
+    --index1 cox1.aln.fasta_AlnIndex.txt \
+    --index2 cox1_PdbIndex.txt \
+    --output cox1.aln.fasta_PdbIndex.txt
 
-python3 ../../src/sged-liftover-index.py \
-         --index1 cox2.aln.fasta_AlnIndex.txt \
-         --index2 cox2_PdbIndex.txt \
-         --output cox2.aln.fasta_PdbIndex.txt
+sged-liftover-index \
+    --index1 cox2.aln.fasta_AlnIndex.txt \
+    --index2 cox2_PdbIndex.txt \
+    --output cox2.aln.fasta_PdbIndex.txt
 
-python3 ../../src/sged-liftover-index.py \
-         --index1 cox3.aln.fasta_AlnIndex.txt \
-         --index2 cox3_PdbIndex.txt \
-         --output cox3.aln.fasta_PdbIndex.txt
+sged-liftover-index \
+    --index1 cox3.aln.fasta_AlnIndex.txt \
+    --index2 cox3_PdbIndex.txt \
+    --output cox3.aln.fasta_PdbIndex.txt
 ```
 
 We then merge the three indexes into a single one, since they are complementary:
 
 ```bash
-python3 ../../src/sged-merge-indexes.py \
-         --index cox1.aln.fasta_PdbIndex.txt \
-         --index cox2.aln.fasta_PdbIndex.txt \
-         --index cox3.aln.fasta_PdbIndex.txt \
-         --output coxall_PdbIndex.txt
+sged-merge-indexes \
+    --index cox1.aln.fasta_PdbIndex.txt \
+    --index cox2.aln.fasta_PdbIndex.txt \
+    --index cox3.aln.fasta_PdbIndex.txt \
+    --output coxall_PdbIndex.txt
 ```
 
 Finally, we get the PDB coordinates of each coevolving group:
 
 ```bash
-python3 ../../src/sged-translate-coords.py \
-         --sged coxall_predictions_pvalues.sged \
-         --index coxall_PdbIndex.txt \
-         --output coxall_predictions_pvalues_tln.sged
+sged-translate-coords \
+    --sged coxall_predictions_pvalues.sged \
+    --index coxall_PdbIndex.txt \
+    --output coxall_predictions_pvalues_tln.sged
 ```
 
 We can then visualize the results, for instance using the [https://www.rbvi.ucsf.edu/chimerax/](ChimeraX) program:

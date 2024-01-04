@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/env python3
 
 """ Created on 31/07/20 by jdutheil
 

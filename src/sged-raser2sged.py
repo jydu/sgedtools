@@ -1,4 +1,5 @@
-# Libraries
+#!/usr/bin/env python3
+
 import sys, getopt
 import pandas as pd
 from Bio import SeqIO

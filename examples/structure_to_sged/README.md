@@ -1,9 +1,15 @@
+We assume that all dependencies have been installed into a conda environment and activate it:
+
+```bash
+conda activate sgedtools-env
+```
+
 # List residues in a structure file
 
 We list all the positions in the hemoglobin tetramer:
 
 ```bash
-python3 ../../src/sged-structure-list.py \
+sged-structure-list \
     --pdb-id 1a3n \
     --pdb-format remote:mmCif \
     --output Hemoglobin.sged
@@ -12,7 +18,7 @@ python3 ../../src/sged-structure-list.py \
 We then look at all pairwise 3D distances. For this, we first need to list all possible pairs of residues:
 
 ```bash
-python3 ../../src/sged-get-all-pairs.py \
+sged-get-all-pairs \
     --sged Hemoglobin.sged \
     --output Hemoglobin-pairs.sged
 ```
@@ -20,7 +26,7 @@ python3 ../../src/sged-get-all-pairs.py \
 This makes 163,307 pairs! We compute the Calpha distance for each pair, as well as the chain of each residue:
 
 ```bash
-python3 ../../src/sged-structure-infos.py \
+sged-structure-infos \
     --sged Hemoglobin-pairs.sged \
     --pdb 1a3n.cif \
     --pdb-format mmCif \

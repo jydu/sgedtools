@@ -46,10 +46,16 @@ selected sites in the main result file of PAML should be extracted and converted
 SGED format.
 In this example, the SGED file will contain all (positively selected) sites reported by PAML. To follow the original publication, we will select only sites with a posterior probability at least equal to 0.7.
 
-The converting process is done with the `sged-paml2sged.py` script:
+We assume that all dependencies have been installed into a conda environment and activate it:
 
 ```bash
-python3 ../../src/sged-paml2sged.py \
+conda activate sgedtools-env
+```
+
+The converting process is done with the `sged-paml2sged` script:
+
+```bash
+sged-paml2sged \
     --paml mlc \
     --output lysozymeLarge-possel.sged \
     --method bayesian \
@@ -61,7 +67,7 @@ We retrieve the sites detected by the empirical Bayesian method.
 ## Getting a PDB file and creating a PDB index
 
 To map the identified positively selected sites onto a protein structure, the protein's
-three-dimensional(3D) structure is required. The `sged-create-structure-index.py` program can
+three-dimensional(3D) structure is required. The `sged-create-structure-index` program can
 be used to find the best-matched protein structure and create a PDB index.
 The program can read two different file formats for protein structures, Protein Data Bank (PDB) file and macromolecular Crystallographic Information File (mmCIF).
 
@@ -73,13 +79,13 @@ of the foreground branch was inserted to the MEGA7 (MEGA7: Molecular Evolutionar
 from a text file, translated into the protein sequence, and exported as fasta format.
 
 ```bash
-python3 ../../src/sged-create-structure-index.py \
-          --pdb "*.pdb" \
-          --pdb-format PDB \
-          --alignment ../data/colobus_aa.fas \
-          --alignment-format fasta \
-          --output lysozymeLarge_PdbIndex.txt \
-          --exclude-incomplete
+sged-create-structure-index \
+    --pdb "*.pdb" \
+    --pdb-format PDB \
+    --alignment ../data/colobus_aa.fas \
+    --alignment-format fasta \
+    --output lysozymeLarge_PdbIndex.txt \
+    --exclude-incomplete
 ```
 
 Note that we use a glob pattern to analyse all PDB files in the folder. For the glob pattern to be parsed by the program and not bash (which would lead to a program error), we surround the pattern with quotes.
@@ -87,15 +93,15 @@ To create the index, the program will align all sequences from the input alignme
 
 ## Coordinates translation
 
-Lastly, identified positively selected sites should be translated according to the index using the `sged-translate-coords.py` program.
+Lastly, identified positively selected sites should be translated according to the index using the `sged-translate-coords` program.
 In this step, the converted SGED file and the PDB index file are needed. 
 
 ```bash
-python3 ../../src/sged-translate-coords.py \
-          --sged lysozymeLarge-possel.sged \
-          --output lysozymeLarge-possel-PDB.sged \
-          --index lysozymeLarge_PdbIndex.txt \
-          --name PDB
+sged-translate-coords \
+    --sged lysozymeLarge-possel.sged \
+    --output lysozymeLarge-possel-PDB.sged \
+    --index lysozymeLarge_PdbIndex.txt \
+    --name PDB
 ```
 
 Which gives:
@@ -128,14 +134,14 @@ query           115 CQNRDV-RQYVQGCGV 130
 This is due to gap opening scores being 0 by default. We create a new index using a penalty of -2 instead:
 
 ```bash
-python3 ../../src/sged-create-structure-index.py \
-          --pdb "*.pdb" \
-          --pdb-format PDB \
-          --alignment ../data/colobus_aa.fas \
-          --alignment-format fasta \
-          --gap-open -2 \
-          --output lysozymeLarge_PdbIndex2.txt \
-          --exclude-incomplete
+sged-create-structure-index \
+    --pdb "*.pdb" \
+    --pdb-format PDB \
+    --alignment ../data/colobus_aa.fas \
+    --alignment-format fasta \
+    --gap-open -2 \
+    --output lysozymeLarge_PdbIndex2.txt \
+    --exclude-incomplete
 ```
 
 ```
@@ -153,15 +159,17 @@ query           120 VRQYVQGCGV 130
 ```
 
 We re-translate the selected groups:
+
 ```bash
-python3 ../../src/sged-translate-coords.py \
-          --sged lysozymeLarge-possel.sged \
-          --output lysozymeLarge-possel-PDB.sged \
-          --index lysozymeLarge_PdbIndex2.txt \
-          --name PDB
+sged-translate-coords \
+    --sged lysozymeLarge-possel.sged \
+    --output lysozymeLarge-possel-PDB.sged \
+    --index lysozymeLarge_PdbIndex2.txt \
+    --name PDB
 ```
 
 Which gives:
+
 ```
 Group   PDB     amino_acid      probability
 [14]    [A:ARG14]       R       0.859
@@ -190,25 +198,31 @@ show mesh, all
 ```
 
 Then we select the positively selected residues to show onto the protein structure
+
 ```
 select my_residues, resi 14+21+23+41...
 ```
 
 Again the model and color of the positively selected residues can be arranged by PyMOL options or,
+
 ```
 show spheres, my_residues
 ```
 Labels can be showed using PyMOL interface.
 For label size:
+
 ```
 label_size set to 25
 ```
+
 For label positions:
+
 ```
  label_position set to [ 4, 3, 8 ]
 ```
 
 Finally, the 3D structure can be saved in PNG format or PDB format
+
 ```
 png /path/to/final.png, dpi=300, ray=1
 save /path/to/final.pdb, selection=my_residues
@@ -221,50 +235,55 @@ save /path/to/final.pdb, selection=my_residues
 
 The positively selected residues are at the surface of the protein. To test whether this pattern could happen by chance, we can draw random sets of residues and look at the distribution of their solvent accessibility.
 First, we create a SGED file with a single group containing all candidates:
+
 ```bash
-python3 ../../src/sged-group.py \
-         --sged lysozymeLarge-possel-PDB.sged \
-         --group PDB \
-         --output lysozymeLarge-possel-group.sged
+sged-group \
+    --sged lysozymeLarge-possel-PDB.sged \
+    --group PDB \
+    --output lysozymeLarge-possel-group.sged
 ```
 
 We then compute summary structural statistics for the group:
+
 ```bash
-python3 ../../src/sged-structure-infos.py \
-         --sged lysozymeLarge-possel-group.sged \
-         --pdb 134l.pdb \
-         --pdb-format PDB \
-         --measure AlphaDist \
-         --measure DSSPsum \
-         --output lysozymeLarge-possel-group_PDB_infos.sged
+sged-structure-infos \
+    --sged lysozymeLarge-possel-group.sged \
+    --pdb 134l.pdb \
+    --pdb-format PDB \
+    --measure AlphaDist \
+    --measure DSSPsum \
+    --output lysozymeLarge-possel-group_PDB_infos.sged
 ```
 
 To assess the null distribution, we need to randomly sample sites in the protein structure. For this, we first need a list of all positions in the structure:
+
 ```bash
-python3 ../../src/sged-structure-list.py \
-         --pdb 134l.pdb \
-         --pdb-format PDB \
-         --output 134l_residues.sged
+sged-structure-list \
+    --pdb 134l.pdb \
+    --pdb-format PDB \
+    --output 134l_residues.sged
 ```
 
 We then generate random groups of 7 residues:
+
 ```bash
-python3 ../../src/sged-randomize-groups.py \
-         --sged-groups lysozymeLarge-possel-group.sged \
-         --sged-sites 134l_residues.sged \
-         --number-replicates 10000 \
-         --output lysozymeLarge-possel-group_random.sged
+sged-randomize-groups \
+    --sged-groups lysozymeLarge-possel-group.sged \
+    --sged-sites 134l_residues.sged \
+    --number-replicates 10000 \
+    --output lysozymeLarge-possel-group_random.sged
 ```
 
 And compute their structural properties:
+
 ```bash
-python3 ../../src/sged-structure-infos.py \
-         --sged lysozymeLarge-possel-group_random.sged \
-         --pdb 134l.pdb \
-         --pdb-format PDB \
-         --measure AlphaDist \
-         --measure DSSPsum \
-         --output lysozymeLarge-possel-group_random_PDB_infos.sged
+sged-structure-infos \
+    --sged lysozymeLarge-possel-group_random.sged \
+    --pdb 134l.pdb \
+    --pdb-format PDB \
+    --measure AlphaDist \
+    --measure DSSPsum \
+    --output lysozymeLarge-possel-group_random_PDB_infos.sged
 ```
 
 We then compare the observed values to the random expectation:
@@ -300,38 +319,42 @@ We can then ask whether candidate residues are more dispersed because they are a
 First, we assess whether residues are more dispersed than chance compared to residues with similar exposure. We sample sites with RSA similar to that of the positively selected sites.
 
 We get the RSA of each position in the structure:
+
 ```bash
-python3 ../../src/sged-structure-infos.py \
-         --sged 134l_residues.sged \
-         --pdb 134l.pdb \
-         --pdb-format PDB \
-         --measure DSSP \
-         --output 134l_residues_infos.sged
+sged-structure-infos \
+    --sged 134l_residues.sged \
+    --pdb 134l.pdb \
+    --pdb-format PDB \
+    --measure DSSP \
+    --output 134l_residues_infos.sged
 ```
 
 Then we sample according to the RSA of sites:
+
 ```bash
-python3 ../../src/sged-randomize-groups.py \
-         --sged-groups lysozymeLarge-possel-group.sged \
-         --sged-sites 134l_residues_infos.sged \
-         --measure Rsa \
-         --similarity-threshold 0.2 \
-         --number-replicates 10000 \
-         --output lysozymeLarge-possel-group_random-rsa.sged
+sged-randomize-groups \
+    --sged-groups lysozymeLarge-possel-group.sged \
+    --sged-sites 134l_residues_infos.sged \
+    --measure Rsa \
+    --similarity-threshold 0.2 \
+    --number-replicates 10000 \
+    --output lysozymeLarge-possel-group_random-rsa.sged
 ```
 
 We then compute structural statistics for the random groups:
+
 ```bash
-python3 ../../src/sged-structure-infos.py \
-         --sged lysozymeLarge-possel-group_random-rsa.sged \
-         --pdb 134l.pdb \
-         --pdb-format PDB \
-         --measure AlphaDist \
-         --measure DSSPsum \
-         --output lysozymeLarge-possel-group_random-rsa_PDB_infos.sged
+sged-structure-infos \
+    --sged lysozymeLarge-possel-group_random-rsa.sged \
+    --pdb 134l.pdb \
+    --pdb-format PDB \
+    --measure AlphaDist \
+    --measure DSSPsum \
+    --output lysozymeLarge-possel-group_random-rsa_PDB_infos.sged
 ```
 
 And we plot the results in R:
+
 ```r
 sims <- read.table("lysozymeLarge-possel-group_random-rsa_PDB_infos.sged", header = TRUE)
 obs <- read.table("lysozymeLarge-possel-group_PDB_infos.sged", header = TRUE)

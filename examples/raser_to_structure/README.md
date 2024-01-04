@@ -6,16 +6,22 @@ Therefore, you may want to convert your RASER outputs into SGED files.
 
 To do that, there are several steps, which we illustrate with a sequence alignment of bacterial oxidoreductases. 
 
+We assume that all dependencies have been installed into a conda environment and activate it:
+
+```bash
+conda activate sgedtools-env
+```
+
 ## Convert Raser output to an SGED file
 
 The first step is to transform the raser output file into a SGED file. It is done using the `sged-raser2sged.py` script.
 
 ```{bash}
-python3 ../../src/sged-raser2sged.py \
-        -r CLU_000422_3_3_results_file.txt \
-        -a CLU_000422_3_3.mase \
-        -f ig \
-        -o CLU_000422_3_3.sged \
+sged-raser2sged \
+    -r CLU_000422_3_3_results_file.txt \
+    -a CLU_000422_3_3.mase \
+    -f ig \
+    -o CLU_000422_3_3.sged \
 ```
 ('ig' is the python name for the Mase format.)
 The program takes two input files:
@@ -24,6 +30,7 @@ The program takes two input files:
 * the multiple sequence alignment file used to run RASER.
 
 This should make an output file looking like this (in TSV format): (several lines in the file)
+
 ```
 Group   amino_acid      probability     Proba>0.95
 [0]     -       NA      NA
@@ -41,14 +48,14 @@ Group   amino_acid      probability     Proba>0.95
 Once the SGED file is made, as we want to map the site-specific rate shifts onto the protein structure, we have to get the three dimensional structure of the protein. This 3D structure is given in files that can be fetched by the `sged-create-structure-index.py` program. This program can be used to find the best-matched protein structure and create a PDB index. The index is the best alignment of the chains in the protein structure file and the multiple sequence alignment. It can take several protein structure references and select the best match using two different file formats: Protein Data Bank (PDB) or macromolecular Crystallographic information file (mmCif).
 
 ```{bash}
-python3 ../../src/sged-create-structure-index.py \
-        -i 5JCA \
-        -i 5JFC \
-        -f remote:PDB \
-        -a CLU_000422_3_3.mase \
-        -g ig \
-        -o CLU_000422_3_3_PdbIndex.txt \ 
-        -x
+sged-create-structure-index \
+    -i 5JCA \
+    -i 5JFC \
+    -f remote:PDB \
+    -a CLU_000422_3_3.mase \
+    -g ig \
+    -o CLU_000422_3_3_PdbIndex.txt \ 
+    -x
 ```
 
 This step should create an index file looking like this: (first 10 lines)
@@ -72,11 +79,11 @@ AlnPos,PdbRes
 Once the index is created, we translate the alignment positions selected in the previously created SGED file into chain sites in the index using the `sged-translate-coords.py`program.
 
 ```{bash}
-python3 ../../src/sged-translate-coords.py \
-        -s CLU_000422_3_3.sged \
-        -i CLU_000422_3_3_PdbIndex.txt \
-        -n PDB \
-        -o CLU_000422_3_3_PDB.sged
+sged-translate-coords \
+    -s CLU_000422_3_3.sged \
+    -i CLU_000422_3_3_PdbIndex.txt \
+    -n PDB \
+    -o CLU_000422_3_3_PDB.sged
 ```
 
 This should make an output file looking like this (in TSV format): (few lines)
@@ -105,13 +112,13 @@ Group	PDB	amino_acid	probability	Proba>0.95
 The last step is to get the secondary structure information for the translated coordinates to be able to map the site specific evolutionary rate shifts. To do this, we will be using the `sged-structure-infos.py` script to calculate several informations on the 3D structure of the protein.
 
 ```{bash}
-python3 ../../src/sged-structure-infos.py \
-        -s CLU_000422_3_3_PDB.sged \
-        -p pdb5jca.ent \
-        -f PDB \
-        -g PDB \
-        -m DSSP \
-        -o CLU_000422_3_3_structinfos.sged
+sged-structure-infos \
+    -s CLU_000422_3_3_PDB.sged \
+    -p pdb5jca.ent \
+    -f PDB \
+    -g PDB \
+    -m DSSP \
+    -o CLU_000422_3_3_structinfos.sged
 ```
 
 The ouptut file should look like this: (few lines)
