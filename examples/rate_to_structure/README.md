@@ -1,7 +1,7 @@
 # Mapping Evolutionary Rates on a Protein Structure
 
 
-This example provide a ConSurf-like analysis[^1]. It uses the Bio++ Program Suite to compute evolutionary rates and ChimeraX to visualize the results. The analysis is done on the coxI gene. 
+This example provide a ConSurf-like analysis[^1]. It uses the Bio++ Program Suite[^2] to compute evolutionary rates and ChimeraX to visualize the results. The analysis is done on the coxI gene. 
 
 ## Computing evolutionary rates
 
@@ -70,4 +70,10 @@ save cox1.png supersample 3 width 600 height 600
 ```
 
 ![](cox1.png)
+
+## References
+
+[^1]: Ashkenazy H, Abadi S, Martz E, Chay O, Mayrose I, Pupko T, Ben-Tal N. ConSurf 2016: an improved methodology to estimate and visualize evolutionary conservation in macromolecules. Nucleic Acids Res (2016);44(W1):W344-50. doi: 10.1093/nar/gkw408.
+
+[^2]: Guéguen L, Gaillard S, Boussau B, Gouy M, Groussin M, Rochette NC, Bigot T, Fournier D, Pouyet F, Cahais V, Bernard A, Scornavacca C, Nabholz B, Haudry A, Dachary L, Galtier N, Belkhir K, Dutheil JY. Bio++: efficient extensible libraries and tools for computational molecular evolution. Mol Biol Evol (2013);30(8):1745-50. doi: 10.1093/molbev/mst097.
 
