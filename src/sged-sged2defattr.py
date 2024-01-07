@@ -99,20 +99,25 @@ def sged2chimera(selection):
     tmp = tmp.split(";")
     sorted_res = dict()
     for desc in tmp:
-        m = desc.split(":")
-        if len(m) == 2 :
-            chain = m[0]
-            res   = m[1]
-            if not chain in sorted_res :
-                sorted_res[chain] = []
-            if len(res) <= 3 :
-                raise NameError("Unvalid PDB residue %s, must be of the form ALA123." % res)
-            sorted_res[chain].append(res[3:])
+        if desc == 'NA' :
+            pass
+            #  ignore missing data
         else :
-            raise NameError("Unvalid PDB residue %s, must be of the form chain:residue." % desc)
+            m = desc.split(":")
+            if len(m) == 2 :
+                chain = m[0]
+                res   = m[1]
+                if not chain in sorted_res :
+                    sorted_res[chain] = []
+                if len(res) <= 3 :
+                    raise NameError("Unvalid PDB residue %s, must be of the form ALA123." % res)
+                else :
+                    sorted_res[chain].append(res[3:])
+            else :
+                raise NameError("Unvalid PDB residue %s, must be of the form chain:residue." % desc)
     result = ""
     for chain, residues in sorted_res.items() :
-        result = result + "/" + chain + ":" + ",".join(residues)
+        result = result + "/" + chain + ":" + ",".join(residues) + " "
     return result
 
 
@@ -128,6 +133,7 @@ with open(sged_file) as csv_file:
         )
         for i, g in enumerate(groups):
             sel = sged2chimera(g)
-            handle.write("\t%s\t%s\n" % (sel, df[var_col].iloc[i]))
+            if sel != "" :
+                handle.write("\t%s\t%s\n" % (sel, df[var_col].iloc[i]))
 
 print("Done.")

@@ -1,0 +1,12 @@
+DATA=HOG_D0643448
+
+alphabet = Protein
+
+input.sequence.file.test   = $(DATA).aln.fasta
+input.sequence.format.test = Fasta
+input.sequence.file.ref    = $(DATA).aln_muscle.fasta
+input.sequence.format.ref  = Fasta
+
+output.scores = $(DATA)_scores.sged
+output.mase = $(DATA)_filter.mase
+output.sps_thresholds = 0.8

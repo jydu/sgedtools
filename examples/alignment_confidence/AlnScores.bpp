@@ -1,0 +1,12 @@
+DATA=omagroup976624_PRDM9
+
+alphabet = Protein
+
+input.sequence.file.test   = $(DATA)_muscle.fasta
+input.sequence.format.test = Fasta
+input.sequence.file.ref    = $(DATA)_clustalo.fasta
+input.sequence.format.ref  = Fasta
+
+output.scores = $(DATA)_scores.sged
+output.mase = $(DATA)_filter.mase
+output.sps_thresholds = 0.8
