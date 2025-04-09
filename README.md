@@ -18,4 +18,4 @@ Group	Size	IsConstant	Dmax	Stat	Nmin	p.value	nobs	code	Method	FDR
 This package contains a series of scripts to manipulate such file.
 These scripts are written in Python, and make (sometimes) use of the BioPython libraries (for sequence alignment and 3D structure manipulation).
 
-See [jydu.github.io/sgedtools](jydu.github.io/sgedtools) for more information.
+See [jydu.github.io/sgedtools](https://jydu.github.io/sgedtools) for more information.
