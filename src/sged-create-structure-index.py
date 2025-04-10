@@ -31,10 +31,12 @@ from Bio.Data import PDBData
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:i:f:a:g:o:u:v:xh"
+unix_opt = "p:l:i:j:f:a:g:o:u:v:xh"
 full_opt = [
     "pdb=",
+    "pdb-list=",
     "pdb-id=",
+    "pdb-id-list=",
     "pdb-format=",
     "alignment=",
     "alignment-format=",
@@ -57,14 +59,19 @@ Available arguments:
     --pdb (-p): Input protein data bank file (required).
         Can be used multiple times to selected several entries.
         File globs can be used to select multiple files.
+    --pdb-list (-l): File with list of PDB files, one per line.
+        Required if --pdb not specified.
     --pdb-format (-f): Format of the protein data bank file (default: PDB).
         Either PDB or mmCif is supported. In addition, remote:PDB or remote:mmCif
         allow to directly download the structure file from the Protein Data Bank.
         In this case, --pdb-id indicates the PDB id.
     --pdb-id (-i): Specify the id of the PDB file to retrieve remotely.
+        Can be used multiple times to selected several entries.
+    --pdb-id-list (-j): File with list of PDB ids to retrieve remotely.
     --alignment (-a): Input alignment file (required);
     --alignment-format (-g): Input alignment format (default: fasta).
-        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO)    --gap-open (-u): Gap opening penalty in pairwise alignment (default: 0).
+        Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO)
+    --gap-open (-u): Gap opening penalty in pairwise alignment (default: 0).
     --gap-extend (-v): Gap extension penalty in pairwise alignment (default : 0).
     --output (-o): Output index file (required).
     --exclude-incomplete (-x): Exclude incomplete chains from scan (default: false).
@@ -91,9 +98,21 @@ for arg, val in arguments:
     if arg in ("-p", "--pdb"):
         pdb_files = pdb_files + glob.glob(val)
         print("PDB file: %s" % val)
+    elif arg in ("-l", "--pdb-list"):
+        f = open(val, "r")
+        files = [line.strip() for line in f]
+        for x in files:
+            print("PDB file: %s" % x)
+        pdb_files = pdb_files + files
     elif arg in ("-i", "--pdb-id"):
         pdb_ids.append(val)
         print("PDB id: %s" % val)
+    elif arg in ("-j", "--pdb-id-list"):
+        f = open(val, "r")
+        ids = [line.strip() for line in f]
+        for x in ids:
+            print("PDB id: %s" % x)
+        pdb_ids = pdb_ids + ids
     elif arg in ("-f", "--pdb-format"):
         pdb_format = val
         if val.upper() != "PDB" and val.upper() != "MMCIF" and val[0:7] != "remote:":
