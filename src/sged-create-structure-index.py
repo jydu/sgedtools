@@ -303,6 +303,10 @@ for residue in chain:
 
 # Get the best alignment:
 pairwise_aln = aligner.align(str(aln_seq.seq).replace("-", ""), pdb_seq)
+if (len(pairwise_aln) > 10):
+    print("%s alignments returned, keeping only the 10 first ones.\nThis is usually due to a too low gap penalty.\nTry rerunning with --gap-open -2 for better results.\n" % len(pairwise_aln))
+    pairwise_aln = [pairwise_aln[i] for i in range(9)]
+
 print(pairwise_aln[0])
 
 # Get the alignment index. If several alignments are provided, only consistent positions are kept:
