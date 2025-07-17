@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 """ Created on 12/02/20 by jdutheil
+    Modified on 07/06/25 by lorenzopenone
 
     Convert alignment coordinates to species-specific and structure coordinates
     This program is part of the SgedTools package.
@@ -27,6 +28,7 @@ from Bio import SeqIO
 from Bio.Align import PairwiseAligner
 from Bio.Align import substitution_matrices
 from Bio.Data import PDBData
+from pathlib import Path
 
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
@@ -61,17 +63,19 @@ Available arguments:
         File globs can be used to select multiple files.
     --pdb-list (-l): File with list of PDB files, one per line.
         Required if --pdb not specified.
-    --pdb-format (-f): Format of the protein data bank file (default: PDB).
-        Either PDB or mmCif is supported. In addition, remote:PDB or remote:mmCif
-        allow to directly download the structure file from the Protein Data Bank.
-        In this case, --pdb-id indicates the PDB id.
+    --pdb-format (-f): Force one format for all input structures. PDB or mmCif.
+        If you omit this option, the script autodetects the format from 
+        each file name/extension, so you can freely pass a single list 
+        containing a mix of .pdb and .cif files in the same run.
+        In addition, remote:PDB or remote:mmCif  allow to directly download the 
+        structure file from the Protein Data Bank. In this case, --pdb-id indicates the PDB id.
     --pdb-id (-i): Specify the id of the PDB file to retrieve remotely.
         Can be used multiple times to selected several entries.
     --pdb-id-list (-j): File with list of PDB ids to retrieve remotely.
     --alignment (-a): Input alignment file (required);
     --alignment-format (-g): Input alignment format (default: fasta).
         Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO)
-    --gap-open (-u): Gap opening penalty in pairwise alignment (default: 0).
+    --gap-open (-u): Gap opening penalty in pairwise alignment (default: -2).
     --gap-extend (-v): Gap extension penalty in pairwise alignment (default : 0).
     --output (-o): Output index file (required).
     --exclude-incomplete (-x): Exclude incomplete chains from scan (default: false).
@@ -86,8 +90,29 @@ except getopt.error as err:
     print(str(err))
     sys.exit(2)
 
+# Helper
+def load_structure(filename):
+    """
+    Return a Bio.PDB.Structure object regardless of file format.
+    Recognises:
+        *.pdb  / *.ent  → PDBParser
+        *.cif / *.mmcif → MMCIFParser
+    """
+    suffix = Path(filename).suffix.lower()
+    if suffix in {".pdb", ".ent"}:
+        parser = PDBParser(QUIET=True)
+    elif suffix in {".cif", ".mmcif"}:
+        parser = MMCIFParser(QUIET=True)
+    else:
+        raise ValueError(f"Unrecognised extension for {filename}")
+    # use the file stem as the structure ID
+    return parser.get_structure(Path(filename).stem, filename)
+
+
 aligner = PairwiseAligner(mode = 'global')
 aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
+aligner.open_gap_score = -2.0 
+aligner.extend_gap_score = 0
 
 pdb_files = []
 pdb_ids = []
@@ -160,21 +185,22 @@ print("Parsing structure(s)...")
 
 if pdb_format.startswith("remote:"):
     remote_format = pdb_format[7:]
+    fmt_up = remote_format.upper()
+    if fmt_up == "PDB":
+        remote_format = "pdb"
+    elif fmt_up == "MMCIF" or fmt_up == "MMCIF":  
+        remote_format = "mmCif"
+    else:
+        print(f"ERROR: unsupported remote format '{remote_format}'.")
+        sys.exit(1)
+
     pdb_server = PDBList(
-        server="http://files.wwpdb.org", pdb = None, obsolete_pdb = False, verbose = True
+        server="http://files.wwpdb.org",
+        pdb=None,
+        obsolete_pdb=False,
+        verbose=True,
     )
-    pdb_format = remote_format
-
-if pdb_format.upper() == "PDB":
-    pdb_format = "pdb" #Case needs to be respected for remote access
-    parser = PDBParser()
-elif pdb_format.upper() == "MMCIF":
-    pdb_format == "mmCif" #Case needs to be respected for remote access
-    parser = MMCIFParser()
-else:
-    print("ERROR!!! Unsupported structure format: %s" % pdb_format)
-    exit(-1)
-
+    pdb_format = remote_format   
 
 if "pdb_server" in locals():
     for pdb_id in pdb_ids:
@@ -192,8 +218,8 @@ if "pdb_server" in locals():
 pdb_seqs = dict()
 prop_incomplete = dict()
 for pdb_file in pdb_files:
-    print("Parsing PDB file %s..." % pdb_file)
-    structure = parser.get_structure("STRUCT", pdb_file)
+    print(f"Parsing structure file {pdb_file}…")
+    structure = load_structure(pdb_file)
 
     # First we need to check that there is only one model:
     if len(structure) > 1:
@@ -228,7 +254,7 @@ for pdb_file in pdb_files:
             pdb_seqs[pdb_file + "|" + chain_id] = chain_seq
             prop_incomplete[pdb_file + "|" + chain_id] = nb_incomplete / len(chain_seq)
 
-if exclude_incomplete:
+if exclude_incomplete and prop_incomplete:
     # Look at the proportion of incomplete data. Keep only chains with the lowest proportion.
     min_prop_incomplete = min(prop_incomplete.values())
     print("Minimum proportion of incomplete data: %s" % min_prop_incomplete)
@@ -267,7 +293,7 @@ pdb_seq = pdb_seqs[best_pdb]
 
 print("Build the index...")
 (best_pdb_file, best_pdb_chain) = best_pdb.split("|")
-structure = parser.get_structure("STRUCT", best_pdb_file)
+structure = load_structure(best_pdb_file)
 model = structure[0]
 nb_chains = len(model)
 
@@ -296,7 +322,7 @@ for residue in chain:
     if is_aa(residue):
         res = residue.get_resname().upper()
         pos = pos + 1
-        letter = PDBData.protein_letters_3to1_extended[res]
+        letter = PDBData.protein_letters_3to1_extended.get(res, "X")
         if not letter in Polypeptide.d1_to_index:
             letter = "X"
         pdb_index[pos] = "%s%s" % (residue.get_resname(), res_to_str(residue.get_id()))
