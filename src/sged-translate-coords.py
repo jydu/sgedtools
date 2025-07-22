@@ -118,9 +118,11 @@ with open(sged_file) as csv_file:
     )  # NA in columns ignored
     groups = df[group_col]
     df.drop(group_col, axis=1, inplace=True)
+    if group_col != "Group" and "Group" in df.columns:
+        df.drop("Group", axis=1, inplace=True)
     with open(output_file, "w") as handle:
         handle.write(
-            "Group%s%s%s%s\n" % (delim, tln_name, delim, delim.join(df.columns))
+            f"{group_col}{delim}{tln_name}{delim}{delim.join(df.columns)}\n"
         )
         for i, g in enumerate(groups):
             tmp = g[1 : (len(g) - 1)]
