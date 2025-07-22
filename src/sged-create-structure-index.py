@@ -33,7 +33,7 @@ from pathlib import Path
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "p:l:i:j:f:a:g:o:u:v:xh"
+unix_opt = "p:l:i:j:f:a:g:o:u:v:c:xh"
 full_opt = [
     "pdb=",
     "pdb-list=",
@@ -45,6 +45,7 @@ full_opt = [
     "output=",
     "gap-open=",
     "gap-extend=",
+    "coverage=",
     "exclude-incomplete",
     "help"
 ]
@@ -77,6 +78,8 @@ Available arguments:
         Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO)
     --gap-open (-u): Gap opening penalty in pairwise alignment (default: -2).
     --gap-extend (-v): Gap extension penalty in pairwise alignment (default : 0).
+    --coverage (-c): Minimum fraction of PDB-chain residues that must be aligned
+        (non-gap vs. nongap) to accept the match (range 0-1; default 0 - no filter)
     --output (-o): Output index file (required).
     --exclude-incomplete (-x): Exclude incomplete chains from scan (default: false).
     --help (-h): Print this message.
@@ -111,8 +114,9 @@ def load_structure(filename):
 
 aligner = PairwiseAligner(mode = 'global')
 aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
-aligner.open_gap_score = -2.0 
+aligner.open_gap_score = 0 
 aligner.extend_gap_score = 0
+coverage_threshold = 0.0
 
 pdb_files = []
 pdb_ids = []
@@ -159,6 +163,9 @@ for arg, val in arguments:
         aligner.open_gap_score = float(val)
     elif arg in ("-v", "--gap-extend"):
         aligner.extend_gap_score = float(val)
+    elif arg in ("-c", "--coverage"):
+        coverage_threshold = float(val)
+        print(f"Coverage threshold: {coverage_threshold}")
     elif arg in ("-x", "--exclude-incomplete"):
         exclude_incomplete = True
     elif arg in ("-h", "--help"):
@@ -276,17 +283,30 @@ with open(aln_file, "r") as handle:
 best_pdb = ""
 best_aln = ""
 best_score = 0
+best_coverage = 0.0
+
 for pdb_id, pdb_seq in pdb_seqs.items():
     for aln_id, aln_seq in aln_seqs.items():
-        score = aligner.score(str(aln_seq.seq).replace("-", ""), pdb_seq)
+        aln   = aligner.align(str(aln_seq.seq).replace("-", ""), pdb_seq)[0]
+        s1, s2 = aln[0], aln[1]
+        overlap = sum(
+            (aa1 != "-") and (aa2 != "-")           # non‑gap in both strings
+            for aa1, aa2 in zip(s1, s2)
+        )
+        coverage = overlap / len(pdb_seq)
+        if coverage < coverage_threshold:
+            continue                                # below threshold → discard
+
+        score = aln.score
         if score > best_score:
-            best_score = score
-            best_pdb = pdb_id
-            best_aln = aln_id
+            best_score   = score
+            best_pdb     = pdb_id
+            best_aln     = aln_id
+            best_coverage = coverage
 
 print(
-    "Best match between sequence %s and chain %s, with a score of %s."
-    % (best_aln, best_pdb, best_score)
+    f"Best match between sequence {best_aln} and chain {best_pdb}, "
+    f"score {best_score:.1f}, coverage {best_coverage:.1%}."
 )
 aln_seq = aln_seqs[best_aln]
 pdb_seq = pdb_seqs[best_pdb]
