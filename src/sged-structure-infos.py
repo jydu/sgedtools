@@ -169,7 +169,7 @@ if pdb_format.upper() == "PDB":
     pdb_format = "PDB" #Case needs to be respected for remote access
     parser = PDBParser()
 elif pdb_format.upper() == "MMCIF":
-    pdb_format == "mmCif" #Case needs to be respected for remote access
+    pdb_format = "mmCif" #Case needs to be respected for remote access
     parser = MMCIFParser()
 else:
     print("ERROR!!! Unsupported structure format: %s" % pdb_format)
@@ -514,10 +514,7 @@ with open(sged_file) as csv_file:
                         if (chain_sel, (" ", int(pos), insert_code)) in dssp:
                             res = dssp[(chain_sel, (" ", int(pos), insert_code))]
                             states_res = state.title()
-                            if states_res in IUPACData.protein_letters_3to1:
-                                letter = IUPACData.protein_letters_3to1[states_res]
-                            else:
-                                letter = "X"
+                            letter = IUPACData.protein_letters_3to1.get(states_res, "X")
                             if res[1] == letter:
                                 motifs[j] = res[2]
                                 if res[3] == "NA":
@@ -621,10 +618,7 @@ with open(sged_file) as csv_file:
                         if (chain_sel, (" ", int(pos), insert_code)) in dssp:
                             res = dssp[(chain_sel, (" ", int(pos), insert_code))]
                             states_res = state.title()
-                            if states_res in IUPACData.protein_letters_3to1:
-                                letter = IUPACData.protein_letters_3to1[states_res]
-                            else:
-                                letter = "X"
+                            letter = IUPACData.protein_letters_3to1.get(states_res, "X")
                             if res[1] == letter:
                                 motifs[j] = res[2]
                                 if res[3] == "NA":
@@ -785,7 +779,7 @@ with open(sged_file) as csv_file:
                         s = list(filter(None, s))
                         for residue in s:
                             res = residue.get_resname().upper()
-                            letter = PDBData.protein_letters_3to1_extended[res]
+                            letter = PDBData.protein_letters_3to1_extended.get(res, "X")
                             if not letter in Polypeptide.d1_to_index:
                                 letter = "X"
                             struct_index[chain_sel][
@@ -850,7 +844,7 @@ with open(sged_file) as csv_file:
                         s = list(filter(None, s))
                         for residue in s:
                             res = residue.get_resname().upper()
-                            letter = PDBData.protein_letters_3to1_extended[res]
+                            letter = PDBData.protein_letters_3to1_extended.get(res, "X")
                             if not letter in Polypeptide.d1_to_index:
                                 letter = "X"
                             struct_index[chain_sel][
