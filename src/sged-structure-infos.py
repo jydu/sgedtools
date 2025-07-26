@@ -169,7 +169,7 @@ if pdb_format.upper() == "PDB":
     pdb_format = "PDB" #Case needs to be respected for remote access
     parser = PDBParser()
 elif pdb_format.upper() == "MMCIF":
-    pdb_format == "mmCif" #Case needs to be respected for remote access
+    pdb_format = "mmCif" #Case needs to be respected for remote access
     parser = MMCIFParser()
 else:
     print("ERROR!!! Unsupported structure format: %s" % pdb_format)
@@ -230,11 +230,18 @@ with open(sged_file) as csv_file:
             results_med = [numpy.nan for x in groups]
             results_mea = [numpy.nan for x in groups]
             for i, g in enumerate(groups):
-                tmp = g[1 : (len(g) - 1)]
-                tmp = tmp.replace(" ", "")
+                if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                    pbar.next()
+                    continue
+                # strip brackets, spaces, split on “;”
+                tmp = g[1:-1].replace(" ", "")
                 res_sel = tmp.split(";")
-                # Ignore missing data:
-                res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                # skip row if *any* selector is NA
+                if any(tok.upper() == "NA" for tok in res_sel):
+                    pbar.next()
+                    continue
+                # keep only non‑empty, non‑NA selectors
+                res_sel_cleaned = [tok for tok in res_sel if tok and tok.upper() != "NA"]
                 calphas = []
                 incomplete = False
                 for j, pos in enumerate(res_sel_cleaned):
@@ -309,11 +316,18 @@ with open(sged_file) as csv_file:
             results_nb_subs = [numpy.nan for x in groups]
             results_nb_mapped = [numpy.nan for x in groups]
             for i, g in enumerate(groups):
-                tmp = g[1 : (len(g) - 1)]
-                tmp = tmp.replace(" ", "")
+                if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                    pbar.next()
+                    continue
+                # strip brackets, spaces, split on “;”
+                tmp = g[1:-1].replace(" ", "")
                 res_sel = tmp.split(";")
-                # Ignore missing data:
-                res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                # skip row if *any* selector is NA
+                if any(tok.upper() == "NA" for tok in res_sel):
+                    pbar.next()
+                    continue
+                # keep only non‑empty, non‑NA selectors
+                res_sel_cleaned = [tok for tok in res_sel if tok and tok.upper() != "NA"]
                 calphas = []
                 incomplete = False
                 for j, pos in enumerate(res_sel_cleaned):
@@ -379,11 +393,18 @@ with open(sged_file) as csv_file:
 
             results_contact = [numpy.nan for x in groups]
             for i, g in enumerate(groups):
-                tmp = g[1 : (len(g) - 1)]
-                tmp = tmp.replace(" ", "")
+                if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                    pbar.next()
+                    continue
+                # strip brackets, spaces, split on “;”
+                tmp = g[1:-1].replace(" ", "")
                 res_sel = tmp.split(";")
-                # Ignore missing data:
-                res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                # skip row if *any* selector is NA
+                if any(tok.upper() == "NA" for tok in res_sel):
+                    pbar.next()
+                    continue
+                # keep only non‑empty, non‑NA selectors
+                res_sel_cleaned = [tok for tok in res_sel if tok and tok.upper() != "NA"]
                 num_contact = [0 for x in res_sel_cleaned]
                 for j, pos in enumerate(res_sel_cleaned):
                     s = pos.split(":") # Assuming format Chain:Residue
@@ -458,11 +479,18 @@ with open(sged_file) as csv_file:
                 dssp = DSSP(model, pdb_file2, dssp = dssp_exe, file_type = pdb_format)
 
                 for i, g in enumerate(groups):
-                    tmp = g[1 : (len(g) - 1)]
-                    tmp = tmp.replace(" ", "")
+                    if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                        pbar.next()
+                        continue
+                    # strip brackets, spaces, split on “;”
+                    tmp = g[1:-1].replace(" ", "")
                     res_sel = tmp.split(";")
-                    # Ignore missing data:
-                    res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                    # skip row if *any* selector is NA
+                    if any(tok.upper() == "NA" for tok in res_sel):
+                        pbar.next()
+                        continue
+                    # keep only non‑empty, non‑NA selectors
+                    res_sel_cleaned = [tok for tok in res_sel if tok and tok.upper() != "NA"]
                     motifs = [numpy.nan for x in res_sel_cleaned]
                     rsa = [numpy.nan for x in res_sel_cleaned]
                     for j, pos in enumerate(res_sel_cleaned):
@@ -486,10 +514,7 @@ with open(sged_file) as csv_file:
                         if (chain_sel, (" ", int(pos), insert_code)) in dssp:
                             res = dssp[(chain_sel, (" ", int(pos), insert_code))]
                             states_res = state.title()
-                            if states_res in IUPACData.protein_letters_3to1:
-                                letter = IUPACData.protein_letters_3to1[states_res]
-                            else:
-                                letter = "X"
+                            letter = IUPACData.protein_letters_3to1.get(states_res, "X")
                             if res[1] == letter:
                                 motifs[j] = res[2]
                                 if res[3] == "NA":
@@ -558,11 +583,18 @@ with open(sged_file) as csv_file:
                 dssp = DSSP(model, pdb_file2, dssp = dssp_exe, file_type = pdb_format)
 
                 for i, g in enumerate(groups):
-                    tmp = g[1 : (len(g) - 1)]
-                    tmp = tmp.replace(" ", "")
+                    if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                        pbar.next()
+                        continue
+                    # strip brackets, spaces, split on “;”
+                    tmp = g[1:-1].replace(" ", "")
                     res_sel = tmp.split(";")
-                    # Ignore missing data:
-                    res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                    # skip row if *any* selector is NA
+                    if any(tok.upper() == "NA" for tok in res_sel):
+                        pbar.next()
+                        continue
+                    # keep only non‑empty, non‑NA selectors
+                    res_sel_cleaned = [tok for tok in res_sel if tok and tok.upper() != "NA"]
                     motifs = [numpy.nan for x in res_sel_cleaned]
                     rsa = [numpy.nan for x in res_sel_cleaned]
                     for j, pos in enumerate(res_sel_cleaned):
@@ -586,10 +618,7 @@ with open(sged_file) as csv_file:
                         if (chain_sel, (" ", int(pos), insert_code)) in dssp:
                             res = dssp[(chain_sel, (" ", int(pos), insert_code))]
                             states_res = state.title()
-                            if states_res in IUPACData.protein_letters_3to1:
-                                letter = IUPACData.protein_letters_3to1[states_res]
-                            else:
-                                letter = "X"
+                            letter = IUPACData.protein_letters_3to1.get(states_res, "X")
                             if res[1] == letter:
                                 motifs[j] = res[2]
                                 if res[3] == "NA":
@@ -626,11 +655,18 @@ with open(sged_file) as csv_file:
             try:
                 rd = ResidueDepth(model)
                 for i, g in enumerate(groups):
-                    tmp = g[1 : (len(g) - 1)]
-                    tmp = tmp.replace(" ", "")
+                    if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                        pbar.next()
+                        continue
+                    # strip brackets, spaces, split on “;”
+                    tmp = g[1:-1].replace(" ", "")
                     res_sel = tmp.split(";")
-                    # Ignore missing data:
-                    res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                    # skip row if *any* selector is NA
+                    if any(tok.upper() == "NA" for tok in res_sel):
+                        pbar.next()
+                        continue
+                    # keep only non‑empty, non‑NA selectors
+                    res_sel_cleaned = [tok for tok in res_sel if tok and tok.upper() != "NA"]
                     res_depth = [numpy.nan for x in res_sel_cleaned]
                     ca_depth = [numpy.nan for x in res_sel_cleaned]
                     for j, pos in enumerate(res_sel_cleaned):
@@ -743,7 +779,7 @@ with open(sged_file) as csv_file:
                         s = list(filter(None, s))
                         for residue in s:
                             res = residue.get_resname().upper()
-                            letter = PDBData.protein_letters_3to1_extended[res]
+                            letter = PDBData.protein_letters_3to1_extended.get(res, "X")
                             if not letter in Polypeptide.d1_to_index:
                                 letter = "X"
                             struct_index[chain_sel][
@@ -808,7 +844,7 @@ with open(sged_file) as csv_file:
                         s = list(filter(None, s))
                         for residue in s:
                             res = residue.get_resname().upper()
-                            letter = PDBData.protein_letters_3to1_extended[res]
+                            letter = PDBData.protein_letters_3to1_extended.get(res, "X")
                             if not letter in Polypeptide.d1_to_index:
                                 letter = "X"
                             struct_index[chain_sel][
@@ -819,10 +855,17 @@ with open(sged_file) as csv_file:
             # Add labels to groups:
             results_labels = [numpy.nan for x in groups]
             for i, g in enumerate(groups):
-                tmp = g[1 : (len(g) - 1)]
-                tmp = tmp.replace(" ", "")
+                if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                    pbar.next()
+                    continue
+                tmp = g[1:-1].replace(" ", "")
                 res_sel = tmp.split(";")
-                group_labels = ["NA" for x in res_sel]
+
+                if any(tok.upper() == "NA" for tok in res_sel):
+                    pbar.next()
+                    continue
+                res_sel = [tok for tok in res_sel if tok and tok.upper() != "NA"]
+                group_labels = ["NA" for _ in res_sel]
                 for j, site in enumerate(res_sel):
                     s = site.split(":") # Assuming format Chain:Residue
                     if len(s) != 2:
@@ -848,11 +891,18 @@ with open(sged_file) as csv_file:
 
             results = [numpy.nan for x in groups]
             for i, g in enumerate(groups):
-                tmp = g[1 : (len(g) - 1)]
-                tmp = tmp.replace(" ", "")
+                if (isinstance(g, float) and numpy.isnan(g)) or str(g).strip().upper() == "NA":
+                    pbar.next()
+                    continue
+                # strip brackets, spaces, split on “;”
+                tmp = g[1:-1].replace(" ", "")
                 res_sel = tmp.split(";")
-                # Ignore missing data:
-                res_sel_cleaned = [x for x in res_sel if x != "NA"]
+                # skip row if *any* selector is NA
+                if any(tok.upper() == "NA" for tok in res_sel):
+                    pbar.next()
+                    continue
+                # keep only non‑empty, non‑NA selectors
+                res_sel_cleaned = [tok for tok in res_sel if tok and tok.upper() != "NA"]
                 chain = dict()
                 for pos in res_sel_cleaned:
                     s = pos.split(":") # Assuming format Chain:Residue
