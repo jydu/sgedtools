@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """ Created on 13/02/20 by jdutheil
-    Modified on 26/07/2025 by lorenzopenone
+    Modified on 30/07/2025 by lorenzopenone
 
     Convert multi-sites groups into single sites groups. 
     Allow to specify which column to replicate.
@@ -27,26 +27,33 @@ import pandas
 cmd_args = sys.argv
 arg_list = cmd_args[1:]
 
-unix_opt = "s:o:d:g:cm:h"
-full_opt = ["sged=", "output=", "data=", "group=", "csv", "match=", "help"]
+unix_opt = "s:o:d:g:ch"  # -m (match) removed
+full_opt = [
+    "sged=",
+    "output=",
+    "data=",
+    "group=",
+    "csv",
+    "help"
+]
 
-def usage() :
+def usage():
     print(
-"""
+        """
 sged-ungroup
 
-    Convert multi-sites groups into single sites groups. 
-    Allow to specify which column to replicate.
-    Optionally split a matched column in parallel.
+    Convert multi-sites groups into single-site groups. 
+    Allow to specify which column(s) to replicate.
+    You can now split several columns in parallel using --group / -g with a
+    comma-separated list.
 
 Available arguments:
     --sged (-s):   Input SGED file (required).
     --output (-o): Output SGED file (required).
-    --group (-g):  Column where group coordinates are stored (default: Group).
+    --group (-g):  Column **or comma-separated list of columns** where group
+                   coordinates are stored (default: Group).
     --data (-d):   Column selection (default: empty). Columns to copy to output.
                    Their values are duplicated for each emitted row.
-    --match (-m):  Optional column to split in parallel with --group.
-                   If provided, it will be element-wise matched.
     --csv (-c):    Input SGED uses commas instead of tabs (default: tabs).
     --help (-h):   Print this message.
 """
@@ -54,120 +61,95 @@ Available arguments:
     sys.exit()
 
 try:
-    arguments, values = getopt.getopt(arg_list, unix_opt, full_opt)
+    arguments, _ = getopt.getopt(arg_list, unix_opt, full_opt)
 except getopt.error as err:
     print(str(err))
     sys.exit(2)
 
-tabsep = True  # TSV by default
+# Defaults
+use_tsv = True  # TSV default
 selected_cols = []
-group_col = "Group"
-match_col = None
+group_cols = ["Group"]  # may become several columns
 
 for arg, val in arguments:
     if arg in ("-s", "--sged"):
         sged_file = val
-        print("SGED file: %s" % sged_file)
+        print(f"SGED file: {sged_file}")
     elif arg in ("-o", "--output"):
         output_file = val
-        print("Output ungrouped file: %s" % output_file)
+        print(f"Output ungrouped file: {output_file}")
     elif arg in ("-d", "--data"):
         selected_cols = val.split(",") if val else []
     elif arg in ("-g", "--group"):
-        group_col = val
-        print("Group coordinates are in column: %s" % group_col)
-    elif arg in ("-m", "--match"):
-        match_col = val
-        print("Matched column: %s" % match_col)
+        group_cols = [c.strip() for c in val.split(",") if c.strip()]
+        print("Group coordinates are in column(s): %s" % ", ".join(group_cols))
     elif arg in ("-c", "--csv"):
-        tabsep = False
+        use_tsv = False
     elif arg in ("-h", "--help"):
         usage()
 
-if tabsep:
-    print("SGED file is in TSV format")
-    delim = "\t"
-else:
-    print("SGED file is in CSV format")
-    delim = ","
-
-# Check required arguments
-if not 'sged_file' in globals():
-    usage()
-if not 'output_file' in globals():
+# Mandatory arguments check
+if 'sged_file' not in globals() or 'output_file' not in globals():
     usage()
 
-# Ensure the matched column is part of the output if provided
-if match_col and match_col not in selected_cols:
-    selected_cols.append(match_col)
+delim = "\t" if use_tsv else ","
+print("SGED file is in %s format" % ("TSV" if use_tsv else "CSV"))
 
-# Start parsing
 with open(sged_file) as csv_file:
-    df = pandas.read_csv(csv_file, sep=delim, dtype=str, comment='#')
+    df = pandas.read_csv(csv_file, sep=delim, dtype=str, comment="#")
 
-    # Validate presence of required columns
-    if group_col not in df.columns:
-        print(f"ERROR: group column '{group_col}' not found in input.", file=sys.stderr)
-        sys.exit(1)
-    if match_col and match_col not in df.columns:
-        print(f"ERROR: match column '{match_col}' not found in input.", file=sys.stderr)
+    # Check that requested columns exist
+    missing = [c for c in group_cols if c not in df.columns]
+    if missing:
+        print(f"ERROR: group column(s) not found: {', '.join(missing)}", file=sys.stderr)
         sys.exit(1)
 
-    groups = df[group_col]
+    header_cols = group_cols + (selected_cols if selected_cols else [])
 
-    with open(output_file, "w") as handle:
-        # Header
-        if selected_cols:
-            handle.write("Group%s%s\n" % (delim, delim.join(df[selected_cols].columns)))
-        else:
-            handle.write("Group\n")
+    with open(output_file, "w", encoding="utf-8") as handle:
+        handle.write(delim.join(header_cols) + "\n")
 
-        # Rows
-        for i, g in enumerate(groups):
+        for i, g in enumerate(df[group_cols[0]]):  # primary split column drives iteration
             if not isinstance(g, str):
                 continue
-            tmp = g.strip()[1 : (len(g.strip()) - 1)]  # remove [ ]
-            tmp = tmp.replace(" ", "")
+            tmp = g.strip()[1:-1].replace(" ", "")  # remove [ ] and spaces
             if tmp == "":
                 continue
             positions = tmp.split(";")
 
-            # Prepare match values if requested
-            match_values = None
-            if match_col:
-                mv_raw = df[match_col].iloc[i]
-                if isinstance(mv_raw, str) and mv_raw.startswith("[") and mv_raw.endswith("]"):
-                    mv = mv_raw.strip()[1 : (len(mv_raw.strip()) - 1)].replace(" ", "")
-                    match_values = mv.split(";") if mv != "" else []
+            # Build dictionaries for all group columns
+            split_values = {}
+            for col in group_cols:
+                raw_val = df[col].iloc[i]
+                if not isinstance(raw_val, str):
+                    split_values[col] = [str(raw_val)] * len(positions)
+                    continue
+                rv = raw_val.strip()
+                if rv.startswith("[") and rv.endswith("]"):
+                    inner = rv[1:-1].replace(" ", "")
+                    vals = inner.split(";") if inner else [""]
                 else:
-                    # single value, replicate
-                    match_values = [mv_raw] * len(positions)
+                    vals = [rv]
 
-                if len(match_values) != len(positions):
+                # Harmonise length by replication when needed
+                if len(vals) == 1 and len(positions) > 1:
+                    vals *= len(positions)
+                if len(vals) != len(positions):
                     print(
-                        f"WARNING: length mismatch in row {i}: "
-                        f"{group_col} has {len(positions)} items, "
-                        f"{match_col} has {len(match_values)} items. "
-                        f"Replicating unchanged {match_col}.",
-                        file=sys.stderr
+                        f"WARNING: length mismatch in row {i}: column '{col}' has {len(vals)} items while '{group_cols[0]}' has {len(positions)}. Replicating first value.",
+                        file=sys.stderr,
                     )
-                    # fall back to replicate the original field value
-                    mv_raw = df[match_col].iloc[i]
-                    match_values = [mv_raw] * len(positions)
+                    vals = [vals[0]] * len(positions)
+                split_values[col] = vals
 
-            for idx, j in enumerate(positions):
-                # Build the list of output values for selected columns
+            for idx, pos in enumerate(positions):
+                # Bracket each split value
+                split_out = [f"[{split_values[col][idx]}]" for col in group_cols]
+
                 if selected_cols:
                     row_vals = df[selected_cols].iloc[i].astype(str).tolist()
-                    # If match_col is present, replace its value with the matched element
-                    if match_col:
-                        try:
-                            mpos = selected_cols.index(match_col)
-                            row_vals[mpos] = match_values[idx]
-                        except Exception:
-                            pass
-                    handle.write("[%s]%s%s\n" % (j, delim, delim.join(row_vals)))
+                    handle.write("%s%s%s\n" % (delim.join(split_out), delim, delim.join(row_vals)))
                 else:
-                    handle.write("[%s]\n" % j)
+                    handle.write("%s\n" % delim.join(split_out))
 
 print("Done.")
