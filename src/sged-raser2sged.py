@@ -154,9 +154,9 @@ to_write = []
 counter = 0
 for i, aa in enumerate(ref_seq):
      if aa == "-":
-             to_write.append(["["+str(i)+"]", aa]+["NA" for _ in range(raser_df.shape[1])])
+             to_write.append(["["+str(i + 1)+"]", aa]+["NA" for _ in range(raser_df.shape[1])])
      else:
-             to_write.append(["["+str(i)+"]", aa]+[raser_df.iloc[counter, x].replace("\n", "") for x in range(raser_df.shape[1])])
+             to_write.append(["["+str(i + 1)+"]", aa]+[raser_df.iloc[counter, x].replace("\n", "") for x in range(raser_df.shape[1])])
              counter+=1
 
 # Put the output in a dataframe
