@@ -139,11 +139,11 @@ raser_df.replace(to_replace=[None], value="", inplace=True)
 
 if number_cols == 3:
     for counter, param in enumerate(raser_df["probability"]):
-        raser_df["probability"][counter] = param[0].replace("\n", "")
+        raser_df.loc[counter, "probability"] = param[0].replace("\n", "")
 else:
     for counter, param in enumerate(zip(raser_df["probability"], raser_df["Proba > 0.95"])):
-        raser_df["probability"][counter] = param[0].replace("\n", "")
-        raser_df["Proba > 0.95"][counter] = param[1].replace("\n", "")
+        raser_df.loc[counter, "probability"] = param[0].replace("\n", "")
+        raser_df.loc[counter, "Proba > 0.95"] = param[1].replace("\n", "")
 
 # Align the sequences from the alignment file and the raser output.
 
