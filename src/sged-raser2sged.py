@@ -51,7 +51,7 @@ Available arguments:
     --alignment-format (-f): Input alignment format (default: fasta).
         Any format recognized by Bio::AlignIO (see https://biopython.org/wiki/AlignIO).
     --output (-o): Output SGED file (required).
-    --csv (-c): Input SGED file is with comas instead of tabs (default)
+    --csv (-c): Output SGED file uses comas instead of tabs (default)
     --help (-h): Print this message.
 """
     )
