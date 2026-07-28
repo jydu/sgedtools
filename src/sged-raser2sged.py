@@ -21,6 +21,8 @@ from Bio import SeqIO
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    Issue #36 fixed on 2026-07-28 by Kritika-Ch
 """
 
 # Variable input.
@@ -139,7 +141,7 @@ raser_df.replace(to_replace=[None], value="", inplace=True)
 
 if number_cols == 3:
     for counter, param in enumerate(raser_df["probability"]):
-        raser_df["probability"][counter] = param[0].replace("\n", "")
+        raser_df["probability"][counter] = param.replace("\n", "")
 else:
     for counter, param in enumerate(zip(raser_df["probability"], raser_df["Proba > 0.95"])):
         raser_df["probability"][counter] = param[0].replace("\n", "")
